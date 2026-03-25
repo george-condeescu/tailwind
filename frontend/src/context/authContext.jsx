@@ -1,5 +1,5 @@
 import { useReducer, useEffect, useCallback, createContext } from 'react';
-import axios from 'axios';
+import api from '../api/axiosInstance';
 
 import {
   LOGIN_START,
@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }) => {
       return savedDepartment; // Return the cached department data
     } else {
       try {
-        const res = await axios.get(`/departments/user/${id}`);
+        const res = await api.get(`/departments/user/${id}`);
         console.log('Departamentul utilizatorului:', res);
         dispatch({ type: FETCH_DEPARTMENT_SUCCESS, payload: res.data });
         localStorage.setItem('department', JSON.stringify(res.data));
@@ -112,7 +112,6 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
 
       if (savedUser && token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         // Pas 1: Setăm userul
         dispatch({ type: LOGIN_SUCCESS, payload: JSON.parse(savedUser) });
         // Pas 2: Aducem departamentul utilizatorului
@@ -135,7 +134,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('department');
 
     // 2. Acțiune logică: anunțăm Reducer-ul să reseteze state-ul
-    await axios.post('/auth/logout'); // Notificăm backend-ul (opțional, dar recomandat pentru audit și invalidare token)
+    await api.post('/auth/logout'); // Notificăm backend-ul (opțional, dar recomandat pentru audit și invalidare token)
     dispatch({ type: LOGOUT });
 
     console.log('Utilizatorul a fost deconectat cu succes.');
