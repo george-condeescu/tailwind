@@ -60,7 +60,7 @@ export default function ListaDocumente() {
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-amber-300 border-b-2 border-gray-300">
-            <th className="p-2 border-r border-gray-300 text-left min-w-[140px]">
+            <th className="p-2 border-r border-gray-300 text-left min-w-35">
               <button className="flex items-center gap-1 text-black hover:text-red-800 font-bold text-md">
                 Nr. inreg./Revizie <ChevronDown className="w-4 h-4" />
               </button>

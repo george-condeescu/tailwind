@@ -3,8 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { toast, Toaster } from 'react-hot-toast';
 import { Modal } from 'react-bootstrap';
 import { Plus, X } from 'lucide-react';
-
-import axios from 'axios';
 import api from '../../api/axiosInstance';
 
 //validare
@@ -54,7 +52,7 @@ export default function CreateAccount({ isOpen: propIsOpen }) {
   useEffect(() => {
     const baseURL = import.meta.env.VITE_API_URL || '/api';
     setLoading(true);
-    axios
+    api
       .get(`${baseURL}/departments/public`)
       .then((res) => setDepartments(res.data.data ?? res.data))
       .catch((err) => setError(err.message))

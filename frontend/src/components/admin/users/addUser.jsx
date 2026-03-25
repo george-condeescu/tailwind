@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Button, Modal } from 'react-bootstrap';
-import axios from 'axios';
 import api from '../../../api/axiosInstance';
 import { ToastBar } from 'react-hot-toast';
 
@@ -48,7 +47,7 @@ const AddUserModal = ({ showAdd, handleCloseAdd, onSubmit }) => {
   useEffect(() => {
     const fecthDepartments = async () => {
       try {
-        const response = await axios('/departments/');
+        const response = await api('/departments/');
         if (response.status != 200)
           throw new Error('Failed to fetch departments');
 

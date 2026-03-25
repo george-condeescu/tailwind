@@ -1,6 +1,5 @@
 import { createContext, useReducer, useCallback } from 'react';
 import api from '../api/axiosInstance';
-import axios from 'axios';
 
 import {
   FETCH_DEPARTMENTS_START,

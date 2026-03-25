@@ -1,7 +1,7 @@
 import React from 'react';
 import { useEffect, useState, useMemo, lazy } from 'react';
 import { Button, Modal } from 'react-bootstrap';
-import axios from 'axios';
+import api from '../../../api/axiosInstance';
 import { PlusSquare } from 'lucide-react';
 import { useDepartments } from '../../../hooks/useDepartment.js';
 
@@ -69,7 +69,7 @@ const TreeRow = ({
   const handleDelete = async () => {
     if (!window.confirm(`Ștergi departamentul "${name}"?`)) return;
     try {
-      await axios.delete(`/departments/${id}`);
+      await api.delete(`/departments/${id}`);
       await getDepartments();
       if (onDeleted) onDeleted();
     } catch (err) {
@@ -198,7 +198,7 @@ export default function ListaDepartment() {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const response = await axios('/departments/subordonati/51/subtree');
+        const response = await api('/departments/subordonati/51/subtree');
 
         if (response.status != 200)
           throw new Error('Failed to fetch departments');

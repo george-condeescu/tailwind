@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy } from 'react';
 import { Button } from 'react-bootstrap';
-import axios from 'axios';
+import api from '../../../api/axiosInstance';
 import { UserPlus } from 'lucide-react';
 
 const UserRow = lazy(() => import('./userRow'));
@@ -47,7 +47,7 @@ export default function ListUsers({ refreshKey, onDeleteUser, onAddUser }) {
   const handleDelete = async (id) => {
     try {
       setLoading(true);
-      const response = await axios.delete(`/auth/admin/users/${id}`);
+      const response = await api.delete(`/auth/admin/users/${id}`);
 
       if (response.status != 200) throw new Error('Failed to delete user');
       setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
@@ -72,7 +72,7 @@ export default function ListUsers({ refreshKey, onDeleteUser, onAddUser }) {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const response = await axios('/auth/admin/users');
+        const response = await api('/auth/admin/users');
 
         if (response.status != 200) throw new Error('Failed to fetch users');
         const data = await response.data.users;

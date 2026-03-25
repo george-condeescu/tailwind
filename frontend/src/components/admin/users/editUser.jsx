@@ -1,6 +1,6 @@
 import React, { useEffect, useState, lazy } from 'react';
 import { Modal } from 'react-bootstrap';
-import axios from 'axios';
+import api from '../../../api/axiosInstance';
 
 const DepartmentList = lazy(() => import('./deparmentsList'));
 
@@ -33,7 +33,7 @@ const EditUser = ({ show, userId, onHide, onSaved }) => {
     e.preventDefault();
     try {
       setLoading(true);
-      await axios.put(`/auth/admin/users/${userId}`, user).then((response) => {
+      await api.put(`/auth/admin/users/${userId}`, user).then((response) => {
         onSaved(response.data.user); // Apelează callback-ul onSaved cu datele actualizate ale utilizatorului
       });
 
@@ -54,7 +54,7 @@ const EditUser = ({ show, userId, onHide, onSaved }) => {
     async function fetchUser() {
       try {
         setLoading(true);
-        const response = await axios(`/auth/admin/users/${userId}`);
+        const response = await api(`/auth/admin/users/${userId}`);
 
         if (!cancelled) {
           setUser(response.data);
@@ -82,9 +82,7 @@ const EditUser = ({ show, userId, onHide, onSaved }) => {
 
     const fetchSelectedDepartment = async () => {
       try {
-        const response = await axios.get(
-          `/departments/${selectedDepartmentId}`,
-        );
+        const response = await api.get(`/departments/${selectedDepartmentId}`);
 
         // dacă backend-ul tău e de forma { message, data }
         const department = response.data.data ?? response.data;

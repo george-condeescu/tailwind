@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../../api/axiosInstance';
 
 export default function DepartmentsList({
   show,
@@ -16,7 +16,7 @@ export default function DepartmentsList({
     const fetchDepartments = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/departments');
+        const response = await api.get('/departments');
         if (response.status !== 200) {
           throw new Error('Failed to fetch departments');
         }
