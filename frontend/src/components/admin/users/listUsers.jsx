@@ -47,9 +47,7 @@ export default function ListUsers({ refreshKey, onDeleteUser, onAddUser }) {
   const handleDelete = async (id) => {
     try {
       setLoading(true);
-      const response = await axios.delete(
-        `http://localhost:5000/api/auth/admin/users/${id}`,
-      );
+      const response = await axios.delete(`/auth/admin/users/${id}`);
 
       if (response.status != 200) throw new Error('Failed to delete user');
       setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
@@ -74,9 +72,7 @@ export default function ListUsers({ refreshKey, onDeleteUser, onAddUser }) {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const response = await axios(
-          'http://localhost:5000/api/auth/admin/users',
-        );
+        const response = await axios('/auth/admin/users');
 
         if (response.status != 200) throw new Error('Failed to fetch users');
         const data = await response.data.users;

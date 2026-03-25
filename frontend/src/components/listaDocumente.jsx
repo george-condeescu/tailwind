@@ -17,7 +17,7 @@ export default function ListaDocumente() {
   const [editDocId, setEditDocId] = useState(null);
 
   const {
-    data: documentsData = [],
+    data: rawDocumentsData,
     isLoading,
     error,
   } = useQuery({
@@ -28,6 +28,8 @@ export default function ListaDocumente() {
     },
     enabled: !!user?.id,
   });
+
+  const documentsData = Array.isArray(rawDocumentsData) ? rawDocumentsData : [];
 
   const totalPages = Math.ceil(documentsData.length / PAGE_SIZE);
   const paginated = documentsData.slice(

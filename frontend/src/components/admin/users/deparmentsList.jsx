@@ -16,9 +16,7 @@ export default function DepartmentsList({
     const fetchDepartments = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(
-          'http://localhost:5000/api/departments',
-        );
+        const response = await axios.get('/departments');
         if (response.status !== 200) {
           throw new Error('Failed to fetch departments');
         }

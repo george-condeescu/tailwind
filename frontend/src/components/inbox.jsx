@@ -39,7 +39,7 @@ export default function Inbox() {
     error: errorDocuments,
   } = queryDocuments;
 
-  const filteredData = documents
+  const filteredData = Array.isArray(documents)
     ? documents.filter((doc) => {
         const { nrInreg, data_start, data_end, partener, from, status } =
           activeFilters;

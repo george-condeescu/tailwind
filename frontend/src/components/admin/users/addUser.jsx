@@ -48,7 +48,7 @@ const AddUserModal = ({ showAdd, handleCloseAdd, onSubmit }) => {
   useEffect(() => {
     const fecthDepartments = async () => {
       try {
-        const response = await axios('http://localhost:5000/api/departments/');
+        const response = await axios('/departments/');
         if (response.status != 200)
           throw new Error('Failed to fetch departments');
 

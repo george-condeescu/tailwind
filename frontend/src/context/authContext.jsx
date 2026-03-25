@@ -91,9 +91,7 @@ export const AuthProvider = ({ children }) => {
       return savedDepartment; // Return the cached department data
     } else {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/departments/user/${id}`,
-        );
+        const res = await axios.get(`/departments/user/${id}`);
         console.log('Departamentul utilizatorului:', res);
         dispatch({ type: FETCH_DEPARTMENT_SUCCESS, payload: res.data });
         localStorage.setItem('department', JSON.stringify(res.data));
@@ -137,7 +135,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('department');
 
     // 2. Acțiune logică: anunțăm Reducer-ul să reseteze state-ul
-    await axios.post('http://localhost:5000/api/auth/logout'); // Notificăm backend-ul (opțional, dar recomandat pentru audit și invalidare token)
+    await axios.post('/auth/logout'); // Notificăm backend-ul (opțional, dar recomandat pentru audit și invalidare token)
     dispatch({ type: LOGOUT });
 
     console.log('Utilizatorul a fost deconectat cu succes.');

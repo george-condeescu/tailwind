@@ -69,7 +69,7 @@ const TreeRow = ({
   const handleDelete = async () => {
     if (!window.confirm(`Ștergi departamentul "${name}"?`)) return;
     try {
-      await axios.delete(`http://localhost:5000/api/departments/${id}`);
+      await axios.delete(`/departments/${id}`);
       await getDepartments();
       if (onDeleted) onDeleted();
     } catch (err) {
@@ -198,9 +198,7 @@ export default function ListaDepartment() {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const response = await axios(
-          'http://localhost:5000/api/departments/subordonati/51/subtree',
-        );
+        const response = await axios('/departments/subordonati/51/subtree');
 
         if (response.status != 200)
           throw new Error('Failed to fetch departments');

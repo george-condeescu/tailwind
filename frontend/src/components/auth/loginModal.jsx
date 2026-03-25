@@ -83,7 +83,7 @@ export default function Login({ isOpen: propIsOpen }) {
 
       // Example API call using axios
       await api
-        .post('http://localhost:5000/api/auth/login', data)
+        .post('/auth/login', data)
         .then(async (res) => {
           if (res.status === 200) {
             const { token, user } = res.data;
