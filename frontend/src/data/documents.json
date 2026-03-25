@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "selected": false,
+    "nrInreg": "2309 / PM / 04.02.2026",
+    "dataPrimiri": "05.02.2026",
+    "nrDataExtern": "45/04.02.2026",
+    "provDestinatar": "SC EM PRIME CONSTRUCT SRL -> Consiliul Judetean Teleorman",
+    "cuprins": "Diverse - buletin informativ...",
+    "observatii": "bla bla bla ...",
+    "utilizatorCurent": "Adrian Bratu",
+    "stare": "activ"
+  },
+  {
+    "id": 2,
+    "selected": false,
+    "nrInreg": "2310 / PM / 04.02.2026",
+    "dataPrimiri": "06.02.2026",
+    "nrDataExtern": "45/04.02.2026",
+    "provDestinatar": "SC Evstar SRL -> Consiliul Judetean Teleorman",
+    "cuprins": "Diverse - buletin informativ...",
+    "observatii": "bla bla bla ...",
+    "utilizatorCurent": "George Popescu",
+    "stare": "activ"
+  },
+  {
+    "id": 3,
+    "selected": false,
+    "nrInreg": "2311 / PM / 04.02.2026",
+    "dataPrimiri": "07.02.2026",
+    "nrDataExtern": "46/04.02.2026",
+    "provDestinatar": "SC Construct SRL -> Consiliul Judetean Teleorman",
+    "cuprins": "Diverse - buletin informativ...",
+    "observatii": "bla bla bla ...",
+    "utilizatorCurent": "Maria Ionescu",
+    "stare": "activ"
+  }
+]

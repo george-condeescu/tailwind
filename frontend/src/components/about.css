@@ -1,0 +1,68 @@
+.about-us-container {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+.about-us-header {
+  background-color: #007bff;
+  color: white;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.about-us-main {
+  width: 80%;
+  margin: auto;
+  overflow: hidden;
+  padding: 2rem 0;
+}
+
+.about-us-section {
+  margin-bottom: 2rem;
+}
+
+.about-us-section h2 {
+  color: #007bff;
+  margin-bottom: 1rem;
+}
+
+.team-members {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.team-member {
+  text-align: center;
+  margin: 1rem;
+  width: 30%;
+  min-width: 200px;
+}
+
+.team-member img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 1rem;
+}
+
+.about-us-footer {
+  text-align: center;
+  padding: 1rem 0;
+  background-color: #eee;
+  border-top: 1px solid #ddd;
+}
+
+.about-us-section ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.about-us-section li {
+  margin-bottom: 0.5rem;
+}

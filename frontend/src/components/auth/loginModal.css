@@ -1,0 +1,5 @@
+.custom-large-toast {
+  width: 400px; /* Lățime mărită */
+  min-height: 100px; /* Înălțime minimă mărită */
+  font-size: 16px;
+}
