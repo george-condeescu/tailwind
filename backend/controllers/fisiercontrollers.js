@@ -107,7 +107,14 @@ const downloadFisier = async (req, res) => {
     }
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fisier.original_name)}"`);
     res.setHeader('Content-Type', fisier.mime_type || 'application/octet-stream');
-    res.sendFile(absolutePath);
+    const stream = fs.createReadStream(absolutePath);
+    stream.on('error', (streamErr) => {
+      console.error('Stream error:', streamErr);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Eroare la citirea fișierului' });
+      }
+    });
+    stream.pipe(res);
   } catch (error) {
     console.error('Error downloading fisier:', error);
     res.status(500).json({ error: error.message });
