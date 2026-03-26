@@ -138,6 +138,7 @@ export const DepartmentProvider = ({ children }) => {
         return res.data; // Return the department data for immediate use
       } catch (err) {
         dispatch({ type: FETCH_DEPARTMENT_FAILURE, payload: err.message });
+        return null;
       }
     },
     [dispatch],

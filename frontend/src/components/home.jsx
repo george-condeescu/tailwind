@@ -15,7 +15,7 @@ const Home = () => {
         try {
           const dept = await getDepartmentByUserId(user.id);
           // console.log('Departamentul utilizatorului:', dept);
-          setDepartment(dept.data);
+          setDepartment(dept?.data ?? null);
         } catch (error) {
           console.error('Eroare la obținerea departamentului:', error);
         }
