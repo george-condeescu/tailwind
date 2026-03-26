@@ -197,18 +197,12 @@ const findDocumentsInInboxByUserId = async (current_user_id, options = {}) => {
   try {
     const documente = await sequelize.query(
       `SELECT r.nr_inreg, r.obiectul, r.cod_ssi, r.cod_angajament, r.status, r.createdAt,
-      d.nr_revizie, d.note,
-      u2.full_name as from_user,
-      u3.full_name as register_user,
-      dc.data_intrare,
-      dc.citit,
-      p.denumire as partener,
-      d.id,
-      dc.id as circulatie_id
+      d.nr_revizie, d.note, u2.full_name as from_user, u3.full_name as register_user,
+      dc.data_intrare, dc.citit, p.denumire as partener, d.id, dc.id as circulatie_id
     FROM documents d
     JOIN registers r ON d.nr_inreg = r.nr_inreg
     -- AICI ESTE CHEIA: Join doar cu ultimul ID din circulație per document
-    LEFT JOIN document_circulation dc ON dc.id = (
+    JOIN document_circulation dc ON dc.id = (
       SELECT id 
       FROM document_circulation 
       WHERE document_id = d.id and (to_user_id = :current_user_id OR to_user_id IS NULL)
@@ -216,7 +210,7 @@ const findDocumentsInInboxByUserId = async (current_user_id, options = {}) => {
       LIMIT 1
     )
     LEFT JOIN users u2 ON u2.id = dc.from_user_id
-    JOIN users u3 ON u3.id = r.user_id
+    LEFT JOIN users u3 ON u3.id = r.user_id
     JOIN partner p ON p.id = r.partener_id
     WHERE d.current_user_id = :current_user_id
     ORDER BY dc.data_intrare DESC;`,
