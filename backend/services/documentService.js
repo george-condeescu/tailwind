@@ -215,7 +215,7 @@ const findDocumentsInInboxByUserId = async (current_user_id, options = {}) => {
       ORDER BY id DESC
       LIMIT 1
     )
-    JOIN users u2 ON u2.id = dc.from_user_id
+    LEFT JOIN users u2 ON u2.id = dc.from_user_id
     JOIN users u3 ON u3.id = r.user_id
     JOIN partner p ON p.id = r.partener_id
     WHERE d.current_user_id = :current_user_id
