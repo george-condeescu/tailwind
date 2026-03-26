@@ -80,10 +80,9 @@ export default function AdaugaRevizie() {
         document_id: documentId,
         action: 'RECEIVE',
         from_user_id: user.id,
-        to_user_id: null,
+        to_user_id: user.id,
         data_intrare: now,
         data_iesire: null,
-        // citit: now,
       });
 
       // 4. Setam statusul registrului la "ACTIVE"
