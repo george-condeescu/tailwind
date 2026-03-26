@@ -140,7 +140,7 @@ const register = async (req, res) => {
       return { newUser, membership };
     });
     // 5. Log audit pentru crearea user-ului
-    await logAuditEvent(t.connection, {
+    await logAuditEvent(pool, {
       req,
       action: 'CREATE',
       entity_type: 'USER',
