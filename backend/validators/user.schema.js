@@ -13,8 +13,8 @@ export const userCreateSchema = z.object({
   full_name: z.string().min(5, 'Minim 5 caractere.'),
   email: z.email('Email invalid'),
   password: passwordSchema,
-  is_admin: z.number().int().min(0).max(1),
-  is_active: z.number().int().min(0).max(1),
+  is_admin: z.coerce.number().int().min(0).max(1).optional().default(0),
+  is_active: z.coerce.number().int().min(0).max(1).optional().default(1),
 });
 
 export const userUpdateSchema = z.object({
@@ -22,6 +22,6 @@ export const userUpdateSchema = z.object({
   full_name: z.string().min(5, 'Minim 5 caractere.').optional(),
   email: z.email('Email invalid').optional(),
   password: passwordSchema.optional(),
-  is_admin: z.number().int().min(0).max(1).optional(),
-  is_active: z.number().int().min(0).max(1).optional(),
+  is_admin: z.coerce.number().int().min(0).max(1).optional(),
+  is_active: z.coerce.number().int().min(0).max(1).optional(),
 });
