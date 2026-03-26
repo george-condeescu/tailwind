@@ -28,8 +28,17 @@ const prioritateLabels = {
   ridicata: 'Ridicată',
 };
 
+function parseFisiere(fisiere) {
+  if (Array.isArray(fisiere)) return fisiere;
+  if (typeof fisiere === 'string') {
+    try { return JSON.parse(fisiere); } catch { return []; }
+  }
+  return [];
+}
+
 function TicketCard({ ticket }) {
   const [expanded, setExpanded] = useState(false);
+  const fisiere = parseFisiere(ticket.fisiere);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -90,13 +99,13 @@ function TicketCard({ ticket }) {
           </div>
 
           {/* Capturi ecran */}
-          {ticket.fisiere?.length > 0 && (
+          {fisiere.length > 0 && (
             <div>
               <p className="text-xs font-medium text-gray-400 uppercase mb-2">
-                Capturi de ecran atașate ({ticket.fisiere.length})
+                Capturi de ecran atașate ({fisiere.length})
               </p>
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {ticket.fisiere.map((f, i) => (
+                {fisiere.map((f, i) => (
                   <a
                     key={i}
                     href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/uploads/tickets/${f.filename}`}

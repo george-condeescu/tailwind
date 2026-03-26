@@ -22,8 +22,17 @@ const statusColors = {
 const STATUS_OPTIONS = ['nou', 'in_lucru', 'rezolvat'];
 
 /* ─── View modal ─────────────────────────────────────────────────────────── */
+function parseFisiere(fisiere) {
+  if (Array.isArray(fisiere)) return fisiere;
+  if (typeof fisiere === 'string') {
+    try { return JSON.parse(fisiere); } catch { return []; }
+  }
+  return [];
+}
+
 function ViewTicketModal({ ticket, onClose }) {
   const [creator, setCreator] = useState(null);
+  const fisiere = parseFisiere(ticket.fisiere);
 
   useEffect(() => {
     if (!ticket.user_id) return;
@@ -118,13 +127,13 @@ function ViewTicketModal({ ticket, onClose }) {
             </div>
           )}
 
-          {ticket.fisiere?.length > 0 && (
+          {fisiere.length > 0 && (
             <div>
               <p className="text-xs font-medium text-gray-400 uppercase mb-2">
                 Capturi de ecran
               </p>
               <div className="grid grid-cols-3 gap-2">
-                {ticket.fisiere.map((f, i) => (
+                {fisiere.map((f, i) => (
                   <a
                     key={i}
                     href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/uploads/tickets/${f.filename}`}
@@ -230,6 +239,7 @@ function MessageModal({ ticket, onClose, onSent }) {
 /* ─── Ticket row ──────────────────────────────────────────────────────────── */
 function TicketRow({ ticket, onView, onMessage, onDelete, onStatusChange }) {
   const [changingStatus, setChangingStatus] = useState(false);
+  const fisiere = parseFisiere(ticket.fisiere);
 
   const handleStatusChange = async (e) => {
     const newStatus = e.target.value;
@@ -285,7 +295,7 @@ function TicketRow({ ticket, onView, onMessage, onDelete, onStatusChange }) {
           : '—'}
       </td>
       <td className="px-2 py-2 whitespace-nowrap text-[14px] text-blue-900 text-center">
-        {ticket.fisiere?.length ?? 0}
+        {fisiere.length}
       </td>
       <td className="px-2 py-2 whitespace-nowrap text-[16px] font-medium text-blue-900 space-x-1">
         <button
