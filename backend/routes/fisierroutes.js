@@ -7,6 +7,7 @@ import {
   getFisiereByDocumentId,
   getAllFiles,
   deleteFisierById,
+  downloadFisier,
 } from '../controllers/fisiercontrollers.js';
 
 import { cacheMiddleware } from '../middleware/cacheMiddleware.js';
@@ -22,6 +23,7 @@ router.get('/', cacheMiddleware(300), getAllFiles);
 router.post('/upload', upload.single('file'), uploadFisier);
 // Endpoint pentru încărcarea mai multor fișiere asociate unei revizii
 router.post('/upload-multiple', upload.array('files'), uploadMultipleFiles);
+router.get('/download/:id', downloadFisier);
 router.delete('/:id', deleteFisierById);
 
 export default router;

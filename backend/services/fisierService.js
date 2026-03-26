@@ -102,6 +102,10 @@ const processMultipleUploads = async (files) => {
   return uploadResults;
 };
 
+const findFisierById = async (id) => {
+  return Fisier.findByPk(id);
+};
+
 const findFisiereByDocumentId = async (documentId) => {
   try {
     const fisiere = await Fisier.findAll({
@@ -147,6 +151,7 @@ const deleteFisierById = async (id, transaction) => {
 export default {
   processFileUpload,
   processMultipleUploads,
+  findFisierById,
   findFisiereByDocumentId,
   getAllFiles,
   deleteFisierById,

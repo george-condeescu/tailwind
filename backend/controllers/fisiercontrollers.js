@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import sequelize from '../utils/database.js';
 import fisierService from '../services/fisierService.js';
 import { myCache } from '../middleware/cacheMiddleware.js';
@@ -92,10 +94,31 @@ const deleteFisierById = async (req, res) => {
   }
 };
 
+const downloadFisier = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const fisier = await fisierService.findFisierById(id);
+    if (!fisier) {
+      return res.status(404).json({ error: 'Fisier negăsit' });
+    }
+    const absolutePath = path.resolve(fisier.file_path);
+    if (!fs.existsSync(absolutePath)) {
+      return res.status(404).json({ error: 'Fișierul nu există pe disc' });
+    }
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fisier.original_name)}"`);
+    res.setHeader('Content-Type', fisier.mime_type || 'application/octet-stream');
+    res.sendFile(absolutePath);
+  } catch (error) {
+    console.error('Error downloading fisier:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export {
   uploadFisier,
   uploadMultipleFiles,
   getFisiereByDocumentId,
   getAllFiles,
   deleteFisierById,
+  downloadFisier,
 };

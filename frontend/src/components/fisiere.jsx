@@ -38,6 +38,21 @@ export default function Fisiere() {
     error: usersError,
   } = usersQuery;
 
+  const handleDownload = async (fileId, originalName) => {
+    try {
+      const response = await api.get(`/fisiere/download/${fileId}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(response.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = originalName;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('Eroare la descărcarea fișierului.');
+    }
+  };
+
   const handleDelete = async (fileId) => {
     if (!confirm('Ștergi fișierul?')) return;
     try {
@@ -120,12 +135,12 @@ export default function Fisiere() {
             <div className="w-[80%]">
               <p className="text-gray-700">
                 Nume fisier:{' '}
-                <a
-                  href={`/pdfuri/${file.file_name}`}
-                  download={file.original_name}
+                <button
+                  className="text-blue-600 underline hover:text-blue-800"
+                  onClick={() => handleDownload(file.id, file.original_name)}
                 >
                   {file.original_name}
-                </a>
+                </button>
               </p>
               <p className="text-sm text-gray-500">
                 Incarcat de{' '}
