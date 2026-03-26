@@ -211,7 +211,7 @@ const findDocumentsInInboxByUserId = async (current_user_id, options = {}) => {
     LEFT JOIN document_circulation dc ON dc.id = (
       SELECT id 
       FROM document_circulation 
-      WHERE document_id = d.id and (to_user_id = :current_user_id OR to_user_id is NULL)
+      WHERE document_id = d.id and (to_user_id = :current_user_id OR to_user_id IS NULL)
       ORDER BY id DESC
       LIMIT 1
     )
