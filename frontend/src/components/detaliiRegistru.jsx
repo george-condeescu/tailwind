@@ -11,6 +11,16 @@ const statusColors = {
   CANCELED: 'bg-red-100 text-red-800',
 };
 
+async function handleDownload(fileId, originalName) {
+  const response = await api.get(`/fisiere/download/${fileId}`, { responseType: 'blob' });
+  const url = window.URL.createObjectURL(response.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = originalName;
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
 export default function DetaliiRegistruModal({ nrInreg, show, handleClose }) {
   const { data: registru, isLoading: loadingReg } = useQuery({
     queryKey: ['registru', nrInreg],
@@ -116,14 +126,13 @@ export default function DetaliiRegistruModal({ nrInreg, show, handleClose }) {
                     Fișiere atașate:
                   </p>
                   {rev.fisiere.map((f) => (
-                    <a
+                    <button
                       key={f.id}
-                      href={`/pdfuri/${f.file_name}`}
-                      download={f.original_name}
+                      onClick={() => handleDownload(f.id, f.original_name)}
                       className="flex items-center gap-2 text-sm text-blue-600 hover:underline mb-1"
                     >
                       <Download size={14} /> {f.original_name}
-                    </a>
+                    </button>
                   ))}
                 </div>
               )}
