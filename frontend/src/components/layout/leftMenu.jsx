@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../api/axiosInstance';
@@ -19,11 +19,13 @@ import {
   Boxes,
   LayoutDashboard,
   Library,
+  TicketCheck,
 } from 'lucide-react';
 
 // Left Menu Component
 export default function LeftMenu({ isMobileMenuOpen, setIsMobileMenuOpen }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch documents count for badge (example)
   const query = useQuery({
@@ -98,6 +100,13 @@ export default function LeftMenu({ isMobileMenuOpen, setIsMobileMenuOpen }) {
       href: '/rapoarte',
       admin: false,
     },
+    {
+      icon: TicketCheck,
+      label: 'Tichete',
+      active: false,
+      href: '/tickets',
+      admin: false,
+    },
 
     {
       icon: Users,
@@ -142,6 +151,13 @@ export default function LeftMenu({ isMobileMenuOpen, setIsMobileMenuOpen }) {
       admin: true,
     },
     {
+      icon: TicketCheck,
+      label: 'Tichete suport',
+      active: false,
+      href: '/admin/tickets',
+      admin: true,
+    },
+    {
       icon: FileStack,
       label: 'Golește Cache',
       active: false,
@@ -149,6 +165,10 @@ export default function LeftMenu({ isMobileMenuOpen, setIsMobileMenuOpen }) {
       admin: true,
     },
   ];
+
+  const handleSuport = () => {
+    navigate('/support');
+  };
 
   return (
     <>
@@ -233,7 +253,10 @@ export default function LeftMenu({ isMobileMenuOpen, setIsMobileMenuOpen }) {
             <p className="text-xs text-gray-600 mb-3 rounded-3xl">
               Contactează echipa de suport
             </p>
-            <button className="w-full bg-blue-600 text-white text-sm py-2 hover:bg-blue-700 transition-colors rounded-3xl">
+            <button
+              className="w-full bg-blue-600 text-white text-sm py-2 hover:bg-blue-700 transition-colors rounded-3xl"
+              onClick={handleSuport}
+            >
               Contact Suport
             </button>
           </div>

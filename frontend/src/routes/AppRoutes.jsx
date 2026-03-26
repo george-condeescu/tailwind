@@ -22,6 +22,8 @@ import ResetPassword from '../components/resetPassword';
 import About from '../components/about';
 import Contact from '../components/contact';
 import PageNotFound from '../components/PageNotFound';
+import CreateTicket from '../components/ticket';
+import TicketsMele from '../components/ticketsMele';
 
 //admin
 import Dashboard from '../components/admin/dashboard';
@@ -30,6 +32,7 @@ import ListaDepartment from '../components/admin/departments/listDepartaments';
 import ListPartner from '../components/admin/partner/listPartner';
 import FlushCache from '../components/admin/flushcache';
 import AdminListaRegistre from '../components/admin/registre/adminListaRegistre';
+import TicketsList from '../components/admin/tickets/ticketsList';
 
 //auth
 import Login from '../components/auth/loginModal';
@@ -46,8 +49,17 @@ const AppRoutes = () => {
       <Route path="/contact" element={<Contact />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/support" element={<CreateTicket />} />
 
       {/* Rute Protejate - Înfășurate în ProtectedRoute */}
+      <Route
+        path="/tickets"
+        element={
+          <ProtectedRoute>
+            <TicketsMele />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/inbox"
         element={
@@ -147,6 +159,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <AdminListaRegistre />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/tickets"
+        element={
+          <ProtectedRoute>
+            <TicketsList />
           </ProtectedRoute>
         }
       />

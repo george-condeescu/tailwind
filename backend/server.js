@@ -28,6 +28,7 @@ import fisierRoutes from './routes/fisierroutes.js';
 // import registruRoutes from './routes/registruroutes.js';
 
 import registruWorkflowRoutes from './routes/registruWorkflow.routes.js';
+import TicketRouter from './routes/ticketroutes.js';
 import {
   authenticateToken,
   requireAdmin,
@@ -94,6 +95,7 @@ app.use('/api/circulatie', authenticateToken, circulatieRoutes);
 app.use('/api/documents', authenticateToken, documentRoutes);
 app.use('/api/comentarii', authenticateToken, comentariuRoutes);
 app.use('/api/fisiere', authenticateToken, fisierRoutes);
+app.use('/api/tickets', TicketRouter);
 
 // folder pentru fisiere statice (PDF-uri)
 app.use('/api/uploads', express.static('uploads'));
