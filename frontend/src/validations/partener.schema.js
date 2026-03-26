@@ -15,5 +15,5 @@ export const partenerSchema = z.object({
     .nullable()
     .optional(),
   email: z.string().email('Email invalid.').nullable().optional(),
-  contact: z.string().min(5, 'Minim 5 caractere.').nullable().optional(),
+  contact: z.string().min(5, 'Minim 5 caractere.').or(z.literal('')).nullable().optional(),
 });

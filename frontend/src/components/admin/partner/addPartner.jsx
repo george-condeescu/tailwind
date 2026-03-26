@@ -18,6 +18,18 @@ export default function AddPartnerModal({ id, show, handleClose }) {
   } = useForm({
     resolver: zodResolver(partenerSchema),
     mode: 'onTouched',
+    defaultValues: {
+      denumire: '',
+      cui: '',
+      reg_com: '',
+      adresa: '',
+      tara: '',
+      judet: '',
+      localitate: '',
+      telefon: '',
+      email: '',
+      contact: '',
+    },
   });
 
   useEffect(() => {
@@ -25,7 +37,19 @@ export default function AddPartnerModal({ id, show, handleClose }) {
     api
       .get(`/partners/${id}`)
       .then((res) => {
-        reset(res.data);
+        const data = res.data;
+        reset({
+          denumire: data.denumire ?? '',
+          cui: data.cui ?? '',
+          reg_com: data.reg_com ?? '',
+          adresa: data.adresa ?? '',
+          tara: data.tara ?? '',
+          judet: data.judet ?? '',
+          localitate: data.localitate ?? '',
+          telefon: data.telefon ?? '',
+          email: data.email ?? '',
+          contact: data.contact ?? '',
+        });
       })
       .catch(() => {
         toast.error('Eroare la încărcarea partenerului');
