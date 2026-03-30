@@ -30,7 +30,7 @@ export default function CirculatiaDocumentului() {
 
   return (
     <div className="flex flex-col w-full  rounded">
-      <h5 className="text-blue-700!">Circulația Documentului: {id}</h5>
+      <h5 className="text-blue-700!">Circulația Documentului: {data[0]?.nr_inreg}/{data[0]?.nr_revizie}</h5>
       <div className="flex flex-col mb-3 bg-sky-100 p-3 rounded w-full min-w-full">
         <button
           className="btn btn-secondary w-24"

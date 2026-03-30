@@ -13,6 +13,14 @@ export default function Comentarii() {
 
   const [editComentariu, setEditComentariu] = useState(null); // { id, text }
 
+  const { data: documentData } = useQuery({
+    queryKey: ['document', id],
+    queryFn: async () => {
+      const response = await api.get(`/documents/${id}`);
+      return response.data;
+    },
+  });
+
   //Query pentru a prelua comentariile asociate documentului
   const query = useQuery({
     queryKey: ['comentarii', id],
@@ -78,7 +86,7 @@ export default function Comentarii() {
   return (
     <div className="p-4">
       <h5 className="text-2xl font-bold mb-2 text-blue-500">
-        Comentarii pentru <span className="text-blue-700 font-bold">{id}</span>
+        Comentarii pentru <span className="text-blue-700 font-bold">{documentData?.nr_inreg}/{documentData?.nr_revizie}</span>
       </h5>
       <hr className="mb-2" />
       {comentariiData

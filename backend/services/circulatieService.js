@@ -164,20 +164,21 @@ const findCirculatieByNrInreg = async (nr_inreg, options = {}) => {
 const findCirculatieByDocumentId = async (document_id, options = {}) => {
   try {
     const circulatie = await sequelize.query(
-      `select 
-        circ.id, 
-        reg.nr_inreg, 
-        par.denumire as partener, 
-        action, 
-        u.full_name as from_user, 
+      `select
+        circ.id,
+        reg.nr_inreg,
+        rev.nr_revizie,
+        par.denumire as partener,
+        action,
+        u.full_name as from_user,
         u2.full_name as to_user,
-        circ.note, 
-        circ.data_intrare, 
+        circ.note,
+        circ.data_intrare,
         circ.data_iesire,
-        circ.citit 
-      from registers reg 
-      inner join documents rev on reg.nr_inreg=rev.nr_inreg 
-      inner join document_circulation circ on rev.id=circ.document_id 
+        circ.citit
+      from registers reg
+      inner join documents rev on reg.nr_inreg=rev.nr_inreg
+      inner join document_circulation circ on rev.id=circ.document_id
       inner join partner par on reg.partener_id=par.id
       inner join users u on circ.from_user_id=u.id
       left join users u2 on circ.to_user_id=u2.id

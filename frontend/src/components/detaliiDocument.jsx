@@ -207,9 +207,9 @@ export default function DetaliiDocument() {
               onChange={(e) => setDestinatar(e.target.value)}
             >
               <option value="">-- selecteaza destinatar --</option>
-              {usersData.users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.full_name}
+              {usersData.users.filter((u) => u.id !== userId).map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.full_name}
                 </option>
               ))}
             </select>

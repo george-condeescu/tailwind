@@ -25,11 +25,11 @@ export default function AdaugaRevizie() {
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Încărcăm lista de registre pentru dropdown
+  // Încărcăm lista de registre pentru dropdown (doar ale utilizatorului curent)
   const { data: registers, isLoading: registersLoading } = useQuery({
-    queryKey: ['registers'],
+    queryKey: ['registers', user?.id],
     queryFn: async () => {
-      const res = await api.get('/registru');
+      const res = await api.get('/registru/search?created_by_me=true');
       return res.data;
     },
   });

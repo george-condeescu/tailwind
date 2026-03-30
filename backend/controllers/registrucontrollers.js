@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, literal } from 'sequelize';
 import { Registru, Document, Partner, User, Nrinreg } from '../models/index.js';
 import registruService from '../services/registruService.js';
 import sequelize from '../utils/database.js';
@@ -164,7 +164,6 @@ const deleteRegistru = async (req, res) => {
 const searchRegistru = async (req, res) => {
   const {
     nr_inreg,
-    created_by_user_id,
     nr_revizie,
     partener,
     obiectul,
@@ -178,9 +177,34 @@ const searchRegistru = async (req, res) => {
     updatedAt_end,
   } = req.query;
 
+  const currentUserId = parseInt(req.user.userId);
+
   try {
     const registruWhere = {};
     const documentWhere = {};
+
+    if (req.query.created_by_me === 'true') {
+      // Doar registrele create de utilizatorul curent
+      registruWhere.user_id = currentUserId;
+    } else {
+      // Filtrare automată: documentele create de sau care au trecut pe la utilizatorul curent
+      registruWhere[Op.and] = [
+        literal(`(
+          \`Registru\`.\`user_id\` = ${currentUserId}
+          OR \`Registru\`.\`nr_inreg\` IN (
+            SELECT DISTINCT d.nr_inreg FROM documents d
+            WHERE d.created_by_user_id = ${currentUserId}
+               OR d.current_user_id = ${currentUserId}
+          )
+          OR \`Registru\`.\`nr_inreg\` IN (
+            SELECT DISTINCT d.nr_inreg FROM documents d
+            INNER JOIN document_circulation c ON c.document_id = d.id
+            WHERE c.to_user_id = ${currentUserId}
+               OR c.from_user_id = ${currentUserId}
+          )
+        )`),
+      ];
+    }
 
     if (nr_inreg) registruWhere.nr_inreg = { [Op.like]: `%${nr_inreg}%` };
     if (obiectul) registruWhere.obiectul = { [Op.like]: `%${obiectul}%` };
@@ -206,8 +230,6 @@ const searchRegistru = async (req, res) => {
     }
 
     if (nr_revizie) documentWhere.nr_revizie = Number(nr_revizie);
-    if (created_by_user_id)
-      documentWhere.created_by_user_id = Number(created_by_user_id);
 
     const hasDocumentFilter = Object.keys(documentWhere).length > 0;
 

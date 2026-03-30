@@ -20,6 +20,9 @@ const AddUserModal = ({ showAdd, handleCloseAdd, onSubmit }) => {
 
   const handleClose = () => {
     setFormData(initialForm);
+    setSelectedParentId('');
+    setSelectedChildId('');
+    setSelectedCompartimentId('');
     handleCloseAdd();
   };
 
@@ -29,7 +32,8 @@ const AddUserModal = ({ showAdd, handleCloseAdd, onSubmit }) => {
 
   const [items, setitems] = useState([]); //toate departamentele
   const [selectedParentId, setSelectedParentId] = useState(''); //directiile
-  const [selectedChildId, setSelectedChildId] = useState(''); //servicii/compartimente subordonaate ale directiilor
+  const [selectedChildId, setSelectedChildId] = useState(''); //servicii subordonate directiilor
+  const [selectedCompartimentId, setSelectedCompartimentId] = useState(''); //compartimente subordonate serviciilor
 
   const directii = useMemo(
     () => items.filter((x) => x.parent_id === 7),
@@ -63,22 +67,40 @@ const AddUserModal = ({ showAdd, handleCloseAdd, onSubmit }) => {
   }, []);
 
   const handleChangeParent = (e) => {
-    const value = e.target.value; //string
+    const value = e.target.value;
     setSelectedParentId(value);
-    setSelectedChildId(''); //reset servicii cand schimbi parentId
+    setSelectedChildId('');
+    setSelectedCompartimentId('');
+    setFormData((prev) => ({
+      ...prev,
+      org_unit_id: value && value !== '0' ? Number(value) : '',
+    }));
   };
 
   const handleChangeChild = (e) => {
     const value = e.target.value;
     setSelectedChildId(value);
-
-    const childCompartimente = items.filter(
-      (x) => x.parent_id === Number(value),
-    );
-    if (childCompartimente.length === 0) {
+    setSelectedCompartimentId('');
+    if (value && value !== '0') {
       setFormData((prev) => ({ ...prev, org_unit_id: Number(value) }));
     } else {
-      setFormData((prev) => ({ ...prev, org_unit_id: '' }));
+      setFormData((prev) => ({
+        ...prev,
+        org_unit_id: selectedParentId ? Number(selectedParentId) : '',
+      }));
+    }
+  };
+
+  const handleChangeCompartiment = (e) => {
+    const value = e.target.value;
+    setSelectedCompartimentId(value);
+    if (value && value !== '0') {
+      setFormData((prev) => ({ ...prev, org_unit_id: Number(value) }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        org_unit_id: selectedChildId ? Number(selectedChildId) : '',
+      }));
     }
   };
 
@@ -262,14 +284,13 @@ const AddUserModal = ({ showAdd, handleCloseAdd, onSubmit }) => {
               </select>
               <span className="font-semibold">Serviciul:</span>{' '}
               <select
-                name="org_unit_id"
-                value={formData.serviciu}
+                name="serviciu"
+                value={selectedChildId}
                 onChange={handleChangeChild}
-                className="mb-1 p-2 border rounded"
+                disabled={!selectedParentId || selectedParentId === '0'}
+                className="mb-1 p-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option key={0} value="0">
-                  --alege--
-                </option>
+                <option value="0">--alege--</option>
                 {servicii.map((serviciu) => (
                   <option value={serviciu.id} key={serviciu.id}>
                     {serviciu.name}
@@ -278,15 +299,13 @@ const AddUserModal = ({ showAdd, handleCloseAdd, onSubmit }) => {
               </select>
               <span className="font-semibold">Compartimentul:</span>{' '}
               <select
-                name="org_unit_id"
-                value={formData.org_unit_id}
-                onChange={handleChange}
-                disabled={compartimente.length === 0}
+                name="compartiment"
+                value={selectedCompartimentId}
+                onChange={handleChangeCompartiment}
+                disabled={!selectedChildId || selectedChildId === '0'}
                 className="mb-1 p-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option key={0} value="0">
-                  --alege--
-                </option>
+                <option value="0">--alege--</option>
                 {compartimente.map((compartiment) => (
                   <option value={compartiment.id} key={compartiment.id}>
                     {compartiment.name}

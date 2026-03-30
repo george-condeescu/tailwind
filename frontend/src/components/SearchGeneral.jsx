@@ -14,7 +14,6 @@ const STATUS_COLORS = {
 
 const emptyForm = {
   nr_inreg: '',
-  created_by_user_id: '',
   nr_revizie: '',
   partener: '',
   obiectul: '',
@@ -89,7 +88,7 @@ export default function SearchGeneral() {
               name="nr_inreg"
               value={form.nr_inreg}
               onChange={handleChange}
-              placeholder="ex: 2024-001"
+              placeholder="ex: DE20260001"
               onKeyDown={handleKeyDown}
               className="flex-1 p-2 border border-gray-300 rounded text-sm"
             />
@@ -105,21 +104,6 @@ export default function SearchGeneral() {
               onChange={handleChange}
               placeholder="0"
               min="0"
-              onKeyDown={handleKeyDown}
-              className="flex-1 p-2 border border-gray-300 rounded text-sm"
-            />
-          </div>
-          <div className="flex items-center gap-2 flex-1 min-w-45">
-            <label className="font-medium text-gray-700 whitespace-nowrap text-sm">
-              Creat de (ID):
-            </label>
-            <input
-              type="number"
-              name="created_by_user_id"
-              value={form.created_by_user_id}
-              onChange={handleChange}
-              placeholder="ID utilizator"
-              min="1"
               onKeyDown={handleKeyDown}
               className="flex-1 p-2 border border-gray-300 rounded text-sm"
             />

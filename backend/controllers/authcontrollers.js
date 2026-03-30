@@ -78,7 +78,7 @@ const register = async (req, res) => {
     return res.status(400).json({ errors });
   }
 
-  const { username, full_name, email, password, is_admin } = userData.data;
+  const { username, full_name, email, password, is_admin, is_active } = userData.data;
   const { start_date, end_date, org_unit_id } = membershipData.data;
 
   //verific daca user-ul exista deja (username si email existente)
@@ -114,7 +114,7 @@ const register = async (req, res) => {
           email,
           password: hashedPassword,
           is_admin,
-          is_active: 0,
+          is_active: is_active ?? 0,
         },
         { transaction: t },
       );

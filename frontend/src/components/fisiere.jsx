@@ -23,6 +23,14 @@ export default function Fisiere() {
   });
   const { data: files, isLoading, error } = query;
 
+  const { data: documentData } = useQuery({
+    queryKey: ['document', id],
+    queryFn: async () => {
+      const response = await api.get(`/documents/${id}`);
+      return response.data;
+    },
+  });
+
   // users
   const usersQuery = useQuery({
     queryKey: ['users'],
@@ -97,7 +105,7 @@ export default function Fisiere() {
   return (
     <div className="p-4">
       <h5 className="text-2xl font-bold mb-2 text-blue-800!">
-        Fisiere atașate documentului {id}
+        Fisiere atașate documentului {documentData?.nr_inreg}/{documentData?.nr_revizie}
       </h5>
       <hr className="mb-2" />
       <form onSubmit={handleSubmit}>
