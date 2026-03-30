@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, use } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast, Toaster } from 'react-hot-toast';
 import { Plus, FileText, RefreshCw, X, Paperclip } from 'lucide-react';
@@ -6,17 +6,26 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import { useAuth } from '../hooks/useAuth';
 
+// Validare Zod
+import { revizieCreateSchema } from '../validations/revizie.schema';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+
 export default function AdaugaRevizie() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [selectedNrInreg, setSelectedNrInreg] = useState(searchParams.get('nr_inreg') ?? '');
+
+  const nrInregFromUrl = searchParams.get('nr_inreg') ?? '';
+  const [selectedNrInreg, setSelectedNrInreg] = useState(nrInregFromUrl);
+  const [revizieNr, setRevizieNr] = useState('');
   const [note, setNote] = useState('');
   const [files, setFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Încărcăm lista de registre pentru dropdown
   const { data: registers, isLoading: registersLoading } = useQuery({
     queryKey: ['registers'],
     queryFn: async () => {
@@ -25,6 +34,7 @@ export default function AdaugaRevizie() {
     },
   });
 
+  // Încărcăm detaliile registrului selectat pentru snapshot
   const { data: registruDetails, isLoading: registruLoading } = useQuery({
     queryKey: ['register', selectedNrInreg],
     queryFn: async () => {
@@ -33,6 +43,23 @@ export default function AdaugaRevizie() {
     },
     enabled: !!selectedNrInreg,
   });
+
+  // Ultimul nr revizie pentru registrul selectat
+  const { data: existingDocs } = useQuery({
+    queryKey: ['documents-nr-inreg', selectedNrInreg],
+    queryFn: async () => {
+      const res = await api.get(
+        `/documents/nr-inreg/${encodeURIComponent(selectedNrInreg)}`,
+      );
+      return res.data;
+    },
+    enabled: !!selectedNrInreg,
+  });
+
+  // Calculăm ultimul nr revizie pentru a-l afișa ca referință
+  const lastRevizieNr = existingDocs?.length
+    ? Math.max(...existingDocs.map((d) => d.nr_revizie ?? 0))
+    : null;
 
   const handleFileAdd = (e) => {
     const newFiles = Array.from(e.target.files);
@@ -44,21 +71,48 @@ export default function AdaugaRevizie() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedNrInreg) {
+  const initialFormValues = {
+    nr_inreg: nrInregFromUrl,
+    nr_revizie: '',
+    note: '',
+  };
+
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(revizieCreateSchema),
+    defaultValues: initialFormValues,
+    mode: 'onSubmit',
+  });
+
+  const onSubmit = async (data) => {
+    console.log('Form data:', data);
+    if (!data.nr_inreg) {
       toast.error('Selectați un registru!');
       return;
     }
     setSubmitting(true);
     try {
+      // Validare client-side
+      revizieCreateSchema.parse({
+        nr_inreg: data.nr_inreg,
+        nr_revizie: data.nr_revizie ? parseInt(data.nr_revizie) : undefined,
+        created_by_user_id: user.id,
+        content_snapshot: JSON.stringify(registruDetails ?? {}),
+        note: data.note,
+        current_user_id: user.id,
+      });
+
       // 1. Creăm documentul (revizia)
       const newDoc = await api.post('/documents', {
-        nr_inreg: selectedNrInreg,
+        nr_inreg: data.nr_inreg,
         created_by_user_id: user.id,
         current_user_id: user.id,
         content_snapshot: JSON.stringify(registruDetails ?? {}),
-        note: note || undefined,
+        note: data.note || undefined,
+        nr_revizie: data.nr_revizie ? parseInt(data.nr_revizie) : undefined,
       });
 
       const documentId = newDoc.data.id;
@@ -94,7 +148,6 @@ export default function AdaugaRevizie() {
       });
       toast.success('Revizia a fost adăugată cu succes!');
       setTimeout(() => navigate('/inbox'), 2000);
-      setNote('');
       setFiles([]);
       setSelectedNrInreg('');
     } catch (err) {
@@ -112,7 +165,7 @@ export default function AdaugaRevizie() {
       <Toaster position="top-center" />
       <h2 className="text-2xl font-bold text-blue-800 mb-6">Adaugă Revizie</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleFormSubmit(onSubmit)} className="space-y-6">
         {/* Selectare registru */}
         <div>
           <label className="block text-sm font-medium mb-1">Registru</label>
@@ -120,17 +173,26 @@ export default function AdaugaRevizie() {
             <p className="text-gray-500 text-sm">Se încarcă registrele...</p>
           ) : (
             <select
-              className="w-full border rounded px-3 py-2"
-              value={selectedNrInreg}
-              onChange={(e) => setSelectedNrInreg(e.target.value)}
+              name="nr_inreg"
+              id="nr_inreg"
+              {...register('nr_inreg', {
+                onChange: (e) => setSelectedNrInreg(e.target.value),
+              })}
+              disabled={!!nrInregFromUrl}
+              className="w-full border rounded px-3 py-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               <option value="">-- Selectați un registru --</option>
               {registers?.map((r) => (
                 <option key={r.nr_inreg} value={r.nr_inreg}>
-                  {r.nr_inreg} — {r.obiectul}
+                  {r.nr_inreg} — {r.partner?.denumire ?? '—'}
                 </option>
               ))}
             </select>
+          )}
+          {errors.nr_inreg && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.nr_inreg.message}
+            </p>
           )}
         </div>
 
@@ -176,16 +238,45 @@ export default function AdaugaRevizie() {
           </div>
         )}
 
+        {/* Nr revizie */}
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Nr. revizie
+            {lastRevizieNr !== null && (
+              <span className="text-gray-400 font-normal ml-1">
+                (ultima: {lastRevizieNr})
+              </span>
+            )}
+          </label>
+          <input
+            name="nr_revizie"
+            id="nr_revizie"
+            type="number"
+            placeholder={lastRevizieNr !== null ? String(lastRevizieNr) : ''}
+            className="w-full border rounded px-3 py-2"
+            {...register('nr_revizie')}
+          />
+          {errors.nr_revizie && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.nr_revizie.message}
+            </p>
+          )}
+        </div>
+
         {/* Notă revizie */}
         <div>
           <label className="block text-sm font-medium mb-1">Notă revizie</label>
           <textarea
+            name="note"
+            id="note"
             className="w-full border rounded px-3 py-2"
             rows={3}
             placeholder="Notă opțională pentru această revizie..."
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
+            {...register('note')}
           />
+          {errors.note && (
+            <p className="text-red-500 text-sm mt-1">{errors.note.message}</p>
+          )}
         </div>
 
         {/* Atașare fișiere */}

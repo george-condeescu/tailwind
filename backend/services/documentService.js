@@ -45,13 +45,30 @@ const createDocument = async (data, t) => {
     }
   }
   //determinam ultima revizie pentru nr_inreg
-  const lastDocument = await Document.findOne({
-    where: { nr_inreg: validData.nr_inreg },
-    order: [['createdAt', 'DESC']],
-    transaction: t,
-    lock: t.LOCK.UPDATE,
-  });
-  validData.nr_revizie = lastDocument ? lastDocument.nr_revizie + 1 : 1;
+  // const lastDocument = await Document.findOne({
+  //   where: { nr_inreg: validData.nr_inreg },
+  //   order: [['createdAt', 'DESC']],
+  //   transaction: t,
+  //   lock: t.LOCK.UPDATE,
+  // });
+  // validData.nr_revizie = lastDocument ? lastDocument.nr_revizie + 1 : 1;
+
+  //verificam daca nr_revizie exista deja pentru nr_inreg
+  if (validData.nr_revizie) {
+    const existingRevizie = await Document.findOne({
+      where: {
+        nr_inreg: validData.nr_inreg,
+        nr_revizie: validData.nr_revizie,
+      },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (existingRevizie) {
+      throw new Error(
+        `Revizia cu numărul ${validData.nr_revizie} pentru înregistrarea ${validData.nr_inreg} există deja`,
+      );
+    }
+  }
 
   try {
     const newDocument = await Document.create(validData, { transaction: t });

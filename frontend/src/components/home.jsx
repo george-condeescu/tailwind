@@ -77,7 +77,7 @@ const Home = () => {
               Înregistrează documentele primite prin poștă sau curier.
             </p>
             <button className="text-green-600 font-semibold hover:underline">
-              Vezi detalii →
+              <Link to="/inbox">Vezi detalii →</Link>
             </button>
           </div>
 
@@ -88,7 +88,7 @@ const Home = () => {
               Evidența documentelor trimise către terți sau instituții.
             </p>
             <button className="text-red-600 font-semibold hover:underline">
-              Vezi detalii →
+              <Link to="/outbox">Vezi detalii →</Link>
             </button>
           </div>
 
@@ -99,7 +99,7 @@ const Home = () => {
               Găsește rapid documente înregistrate folosind filtre avansate.
             </p>
             <button className="text-blue-600 font-semibold hover:underline">
-              Accesează Arhiva →
+              <Link to="/archive">Accesează Arhiva →</Link>
             </button>
           </div>
         </div>

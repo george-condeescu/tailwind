@@ -30,12 +30,9 @@ export const documentCreateSchema = z.object({
       'ID-ul utilizatorului care creează documentul trebuie să fie un număr întreg pozitiv',
   }),
 
-  // Ultima revizie se va determina automat in backend în funcție de nr_inreg și nr_revizie,
-  // deci nu trebuie să fie un câmp obligatoriu în schema de validare
-
-  // nr_revizie: z.number().int().positive({
-  //   message: 'Numărul de revizie trebuie să fie un număr întreg pozitiv',
-  // }),
+  nr_revizie: z.number().int().positive({
+    message: 'Numărul de revizie trebuie să fie un număr întreg pozitiv',
+  }),
 });
 
 export const documentUpdateSchema = z.object({

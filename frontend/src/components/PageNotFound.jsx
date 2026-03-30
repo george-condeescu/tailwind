@@ -20,7 +20,6 @@ const PageNotFound = () => {
           Pagina nu a fost găsită
         </h3>
 
-
         <div className="mt-10 flex items-center justify-center gap-x-6">
           {/* Buton Înapoi */}
           <button
@@ -33,7 +32,7 @@ const PageNotFound = () => {
 
           {/* Buton Acasă */}
           <Link
-            to="/dashboard"
+            to="/"
             className="flex items-center gap-2 rounded-md bg-blue-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-colors"
           >
             <Home className="w-4 h-4" />

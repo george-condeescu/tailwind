@@ -64,6 +64,11 @@ const findAllRegistru = async (req, res) => {
           as: 'creator',
           attributes: ['id', 'full_name'],
         },
+        {
+          model: Partner,
+          as: 'partner',
+          attributes: ['id', 'denumire'],
+        },
       ],
     });
     myCache.set(key, registruri, 300);
