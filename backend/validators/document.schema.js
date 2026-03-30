@@ -7,8 +7,8 @@ export const documentCreateSchema = z.object({
   nr_revizie: z
     .number()
     .int()
-    .positive({
-      message: 'Numărul de revizie trebuie să fie un număr întreg pozitiv',
+    .min(0, {
+      message: 'Numărul de revizie trebuie să fie un număr întreg nenegativ',
     })
     .optional(),
   created_by_user_id: z.number().int().positive({
@@ -30,8 +30,8 @@ export const documentCreateSchema = z.object({
       'ID-ul utilizatorului care creează documentul trebuie să fie un număr întreg pozitiv',
   }),
 
-  nr_revizie: z.number().int().positive({
-    message: 'Numărul de revizie trebuie să fie un număr întreg pozitiv',
+  nr_revizie: z.number().int().min(0, {
+    message: 'Numărul de revizie trebuie să fie un număr întreg nenegativ',
   }),
 });
 
@@ -39,8 +39,8 @@ export const documentUpdateSchema = z.object({
   nr_inreg: z.string().max(20, {
     message: 'Numărul de înregistrare trebuie să aibă maximum 20 de caractere',
   }),
-  nr_revizie: z.number().int().positive({
-    message: 'Numărul de revizie trebuie să fie un număr întreg pozitiv',
+  nr_revizie: z.number().int().min(0, {
+    message: 'Numărul de revizie trebuie să fie un număr întreg nenegativ',
   }),
   created_by_user_id: z.number().int().positive({
     message:

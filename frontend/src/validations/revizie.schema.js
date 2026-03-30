@@ -6,7 +6,7 @@ export const revizieCreateSchema = z.object({
   }),
   nr_revizie: z.preprocess(
     (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
-    z.number().int().positive({ message: 'Numărul de revizie trebuie să fie un număr întreg pozitiv' }).optional(),
+    z.number().int().min(0, { message: 'Numărul de revizie trebuie să fie un număr întreg nenegativ' }).optional(),
   ),
   created_by_user_id: z
     .number()

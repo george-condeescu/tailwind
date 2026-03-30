@@ -98,7 +98,7 @@ export default function AdaugaRevizie() {
       // Validare client-side
       revizieCreateSchema.parse({
         nr_inreg: data.nr_inreg,
-        nr_revizie: data.nr_revizie ? parseInt(data.nr_revizie) : undefined,
+        nr_revizie: data.nr_revizie !== '' && data.nr_revizie !== null && data.nr_revizie !== undefined ? parseInt(data.nr_revizie) : undefined,
         created_by_user_id: user.id,
         content_snapshot: JSON.stringify(registruDetails ?? {}),
         note: data.note,
@@ -112,7 +112,7 @@ export default function AdaugaRevizie() {
         current_user_id: user.id,
         content_snapshot: JSON.stringify(registruDetails ?? {}),
         note: data.note || undefined,
-        nr_revizie: data.nr_revizie ? parseInt(data.nr_revizie) : undefined,
+        nr_revizie: data.nr_revizie !== '' && data.nr_revizie !== null && data.nr_revizie !== undefined ? parseInt(data.nr_revizie) : undefined,
       });
 
       const documentId = newDoc.data.id;

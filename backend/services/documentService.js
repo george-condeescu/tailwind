@@ -54,7 +54,7 @@ const createDocument = async (data, t) => {
   // validData.nr_revizie = lastDocument ? lastDocument.nr_revizie + 1 : 1;
 
   //verificam daca nr_revizie exista deja pentru nr_inreg
-  if (validData.nr_revizie) {
+  if (validData.nr_revizie !== undefined && validData.nr_revizie !== null) {
     const existingRevizie = await Document.findOne({
       where: {
         nr_inreg: validData.nr_inreg,
