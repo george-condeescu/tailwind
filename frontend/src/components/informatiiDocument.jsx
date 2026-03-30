@@ -41,7 +41,7 @@ export default function InformatiiDocument({ documentData }) {
             <strong>Numar Inregistrare:</strong> {documentData?.nr_inreg}
           </p>
           <p className="mb-2 border-b border-gray-200 pb-2">
-            <strong>Numar revizie:</strong> {documentData?.nr_revizie || 'N/A'}
+            <strong>Numar revizie:</strong> {documentData?.nr_revizie ?? 'N/A'}
           </p>
           <p className="mb-2 border-b border-gray-200 pb-2">
             <strong>Data:</strong> {documentData?.registru?.createdAt}
