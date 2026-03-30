@@ -1,21 +1,24 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../hooks/useAuth';
 
 export default function InformatiiDocument({ documentData }) {
-  const id = useParams().id;
+  const { user } = useAuth();
+  const userId = user?.id;
 
   // query to fetch last sender
   const queryLastSender = useQuery({
-    queryKey: ['lastSender', documentData?.id, id],
+    queryKey: ['lastSender', documentData?.id, userId],
     queryFn: async () => {
       const response = await api.get(
-        `/circulatie/last-sender/${documentData?.id}/${id}`,
+        `/circulatie/last-sender/${documentData?.id}/${userId}`,
       );
-      return response.data;
+      const { data } = response;
+      if (!data || Object.keys(data).length === 0) return null;
+      return data;
     },
-    enabled: !!documentData?.id && !!id,
+    enabled: !!documentData?.id && !!userId,
   });
 
   const {
