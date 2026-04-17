@@ -29,6 +29,8 @@ import fisierRoutes from './routes/fisierroutes.js';
 
 import registruWorkflowRoutes from './routes/registruWorkflow.routes.js';
 import TicketRouter from './routes/ticketroutes.js';
+import auditRouter from './routes/auditroutes.js';
+import contactRouter from './routes/contactroutes.js';
 import {
   authenticateToken,
   requireAdmin,
@@ -53,6 +55,7 @@ dotenv.config();
 // }));
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 
 // Activează CORS pentru a permite cereri de la React
@@ -96,6 +99,8 @@ app.use('/api/documents', authenticateToken, documentRoutes);
 app.use('/api/comentarii', authenticateToken, comentariuRoutes);
 app.use('/api/fisiere', authenticateToken, fisierRoutes);
 app.use('/api/tickets', TicketRouter);
+app.use('/api/admin/audit-events', authenticateToken, requireAdmin, auditRouter);
+app.use('/api/contact', contactRouter);
 
 // folder pentru fisiere statice (PDF-uri)
 app.use('/api/uploads', express.static('uploads'));

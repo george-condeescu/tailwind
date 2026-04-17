@@ -164,7 +164,7 @@ export default function CreateAccount({ isOpen: propIsOpen }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+                Parola
               </label>
               <input
                 type="password"
@@ -183,7 +183,7 @@ export default function CreateAccount({ isOpen: propIsOpen }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Confirm Password
+                Confirmare Parolă
               </label>
               <input
                 type="password"
@@ -202,7 +202,7 @@ export default function CreateAccount({ isOpen: propIsOpen }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Department
+                Departament
               </label>
               <select
                 id="department"
@@ -241,7 +241,7 @@ export default function CreateAccount({ isOpen: propIsOpen }) {
             onClick={handleClose}
           >
             <X className="w-4 h-4 mr-2 inline-block" />
-            Close
+            Închide
           </button>
         </Modal.Footer>
       </Modal>

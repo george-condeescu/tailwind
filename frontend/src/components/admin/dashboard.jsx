@@ -1,413 +1,271 @@
-import React, { useEffect, useState, useMemo, lazy, Suspense } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  FileText,
+  BookOpen,
   Users,
-  Archive,
   Building2,
   Handshake,
-  Clock,
+  Paperclip,
+  Ticket,
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  ChevronLeft,
+  ChevronRight,
   RefreshCw,
 } from 'lucide-react';
 import api from '../../api/axiosInstance';
 
-/* ─── Tree components ─────────────────────────────────────────────────────── */
-function TreeNode({ node, level }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <TreeRow
-      node={node}
-      level={level}
-      isOpen={open}
-      toggle={() => setOpen((v) => !v)}
-    />
-  );
-}
-
-function TreeRow({ node, level, isOpen, toggle }) {
-  const hasChildren = node.children && node.children.length > 0;
-  return (
-    <div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '6px 8px',
-          marginLeft: level * 16,
-          borderRadius: 8,
-          cursor: hasChildren ? 'pointer' : 'default',
-          userSelect: 'none',
-        }}
-        onClick={hasChildren ? toggle : undefined}
-      >
-        <span
-          style={{
-            width: 18,
-            display: 'inline-flex',
-            justifyContent: 'center',
-          }}
-        >
-          {hasChildren ? (isOpen ? '−' : '+') : '•'}
-        </span>
-        <span style={{ fontWeight: 600 }}>{node.name}</span>
-      </div>
-      {hasChildren && isOpen && (
-        <div>
-          {node.children.map((child) => (
-            <TreeNode key={child.id} node={child} level={level + 1} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TreeAccordion({ data }) {
-  const roots = useMemo(() => (Array.isArray(data) ? data : [data]), [data]);
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      {roots.map((root) => (
-        <TreeNode key={root.id} node={root} level={0} />
-      ))}
-    </div>
-  );
-}
-
-/* ─── Stat card ───────────────────────────────────────────────────────────── */
-const colorMap = {
-  blue: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' },
-  green: {
-    bg: 'bg-green-50',
-    text: 'text-green-600',
-    border: 'border-green-200',
+const SECTIONS = [
+  {
+    title: 'Registre',
+    icon: BookOpen,
+    color: 'bg-blue-600',
+    listPath: '/admin/registers',
+    addPath: '/admin/registers?action=add',
+    description: 'Gestionează registrele de documente',
   },
-  orange: {
-    bg: 'bg-orange-50',
-    text: 'text-orange-600',
-    border: 'border-orange-200',
+  {
+    title: 'Utilizatori',
+    icon: Users,
+    color: 'bg-indigo-600',
+    listPath: '/admin/users',
+    addPath: '/admin/users?action=add',
+    description: 'Conturi și permisiuni utilizatori',
   },
-  red: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' },
-  teal: { bg: 'bg-teal-50', text: 'text-teal-600', border: 'border-teal-200' },
+  {
+    title: 'Departamente',
+    icon: Building2,
+    color: 'bg-teal-600',
+    listPath: '/admin/departments',
+    addPath: '/admin/departments?action=add',
+    description: 'Structura organizatorică',
+  },
+  {
+    title: 'Parteneri',
+    icon: Handshake,
+    color: 'bg-orange-500',
+    listPath: '/admin/partners',
+    addPath: '/admin/partners?action=add',
+    description: 'Parteneri și entități externe',
+  },
+  {
+    title: 'Fișiere',
+    icon: Paperclip,
+    color: 'bg-rose-600',
+    listPath: '/lista-documente',
+    addPath: '/addDocument',
+    description: 'Documente și atașamente',
+  },
+  {
+    title: 'Tichete',
+    icon: Ticket,
+    color: 'bg-violet-600',
+    listPath: '/admin/tickets',
+    addPath: '/admin/tickets?action=add',
+    description: 'Gestionează tichetele',
+  },
+];
+
+const ACTION_COLORS = {
+  CREATE: 'bg-green-100 text-green-800',
+  UPDATE: 'bg-blue-100 text-blue-800',
+  DELETE: 'bg-red-100 text-red-800',
+  LOGIN: 'bg-purple-100 text-purple-800',
+  LOGOUT: 'bg-gray-100 text-gray-700',
 };
 
-function StatCard({ icon, title, value, color }) {
-  const Icon = icon;
-  const c = colorMap[color] ?? colorMap.blue;
-  return (
-    <div
-      className={`bg-white rounded-xl shadow-sm border ${c.border} p-5 flex items-center gap-4`}
-    >
-      <div className={`${c.bg} ${c.text} rounded-lg p-3`}>
-        <Icon size={22} />
-      </div>
-      <div>
-        <p className="text-2xl font-bold text-gray-800">{value ?? '—'}</p>
-        <p className="text-xs text-gray-500 mt-0.5">{title}</p>
-      </div>
-    </div>
-  );
-}
+const PAGE_SIZE = 15;
 
-/* ─── Recent registrations table ─────────────────────────────────────────── */
-function RecentTable({ rows }) {
-  if (!rows.length) {
-    return (
-      <p className="text-gray-400 text-sm">Nu există înregistrări recente.</p>
-    );
-  }
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-gray-500 border-b">
-            <th className="pb-2 font-medium">Nr. înreg.</th>
-            <th className="pb-2 font-medium">Obiect</th>
-            <th className="pb-2 font-medium">Status</th>
-            <th className="pb-2 font-medium">Dată</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr
-              key={r.nr_inreg}
-              className="border-b last:border-0 hover:bg-gray-50"
-            >
-              <td className="py-2 font-mono text-blue-600">{r.nr_inreg}</td>
-              <td className="py-2 text-gray-700 max-w-[180px] truncate">
-                {r.obiectul ?? '—'}
-              </td>
-              <td className="py-2">
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    r.status === 'activ'
-                      ? 'bg-green-100 text-green-700'
-                      : r.status === 'inchis'
-                        ? 'bg-gray-100 text-gray-600'
-                        : 'bg-yellow-100 text-yellow-700'
-                  }`}
-                >
-                  {r.status ?? '—'}
-                </span>
-              </td>
-              <td className="py-2 text-gray-500 whitespace-nowrap">
-                {r.createdAt
-                  ? new Date(r.createdAt).toLocaleDateString('ro-RO')
-                  : '—'}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-/* ─── Admin action card ───────────────────────────────────────────────────── */
-function AdminCard({ icon, title, count, color, children }) {
-  const Icon = icon;
-  const c = colorMap[color] ?? colorMap.blue;
-  return (
-    <div className="bg-white rounded-xl shadow-md p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className={`${c.bg} ${c.text} rounded-lg p-2`}>
-          <Icon size={18} />
-        </div>
-        <div>
-          <p className="font-semibold text-gray-800">{title}</p>
-          <p className="text-xs text-gray-400">{count} înregistrări</p>
-        </div>
-      </div>
-      <div className="w-full">
-        <Suspense
-          fallback={<span className="text-xs text-gray-400">Se încarcă…</span>}
-        >
-          {children}
-        </Suspense>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Lazy modals ─────────────────────────────────────────────────────────── */
-const AddDepartmentModal = lazy(() => import('./departments/addDepartment'));
-const ListaDepartementModal = lazy(
-  () => import('./departments/listDepartaments'),
-);
-const AddUserModal = lazy(() => import('./users/addUser'));
-const ListUsersModal = lazy(() => import('./users/listUsers'));
-const ListPartner = lazy(() => import('./partner/listPartner'));
-
-/* ─── Dashboard ───────────────────────────────────────────────────────────── */
 export default function Dashboard() {
-  const [stats, setStats] = useState({
-    registre: null,
-    utilizatori: null,
-    fisiere: null,
-    departamente: null,
-    parteneri: null,
-  });
-  const [recentRegistre, setRecentRegistre] = useState([]);
-  const [departments, setDepartments] = useState([]);
-  const [loadingStats, setLoadingStats] = useState(true);
-  const [error, setError] = useState('');
+  const [events, setEvents] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Refresh keys for modals
-  const [countDeps, setCountDeps] = useState(0);
-  const [countUsers, setCountUsers] = useState(0);
-  const [countPartners, setCountPartners] = useState(0);
-
-  const fetchStats = async () => {
-    setLoadingStats(true);
+  const fetchEvents = async (p) => {
+    setLoading(true);
+    setError(null);
     try {
-      const [regRes, usersRes, fisiereRes, depCountRes, partnersRes] =
-        await Promise.allSettled([
-          api.get('/registru'),
-          api.get('/auth/admin/users'),
-          api.get('/fisiere'),
-          api.get('/departments/subordonati/count'),
-          api.get('/partners'),
-        ]);
-
-      const registre =
-        regRes.status === 'fulfilled' ? regRes.value.data.length : 0;
-      const utilizatori =
-        usersRes.status === 'fulfilled' ? usersRes.value.data.count : 0;
-      const fisiere =
-        fisiereRes.status === 'fulfilled' ? fisiereRes.value.data.length : 0;
-      const departamente =
-        depCountRes.status === 'fulfilled'
-          ? depCountRes.value.data.count.count
-          : 0;
-      const parteneri =
-        partnersRes.status === 'fulfilled' ? partnersRes.value.data.length : 0;
-
-      setStats({ registre, utilizatori, fisiere, departamente, parteneri });
-      setCountDeps(departamente);
-      setCountUsers(utilizatori);
-      setCountPartners(parteneri);
-
-      if (regRes.status === 'fulfilled') {
-        const all = regRes.value.data;
-        // show last 5, most recent first
-        setRecentRegistre([...all].reverse().slice(0, 5));
-      }
+      const { data } = await api.get(
+        `/admin/audit-events?limit=${PAGE_SIZE}&page=${p}`,
+      );
+      setEvents(data.events ?? []);
+      setTotal(data.total ?? 0);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.error || err.message);
     } finally {
-      setLoadingStats(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStats();
-    api
-      .get('/departments/subordonati/7/subtree')
-      .then((res) => setDepartments(res.data))
-      .catch((err) => setError(err.message));
-  }, []);
+    fetchEvents(page);
+  }, [page]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-      <div className="max-w-7xl mx-auto">
-        {/* ── Header ────────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-800">Dashboard</h2>
-            <p className="text-gray-500 text-sm mt-1">
-              Vedere generală a sistemului de registratură
-            </p>
-          </div>
-          <button
-            onClick={fetchStats}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+    <div className="p-6 w-full max-w-7xl mx-auto">
+      <h3 className="text-2xl font-bold text-gray-800 mb-6">
+        Dashboard Administrativ
+      </h3>
+
+      {/* Section cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-10">
+        {SECTIONS.map((section) => (
+          <div
+            key={section.title}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col"
           >
-            <RefreshCw
-              size={16}
-              className={loadingStats ? 'animate-spin' : ''}
-            />
-            Actualizează
-          </button>
+            <div
+              className={`${section.color} px-4 py-3 flex items-center gap-2`}
+            >
+              <section.icon size={18} className="text-white" />
+              <span className="text-white font-semibold text-sm">
+                {section.title}
+              </span>
+            </div>
+            <div className="px-4 py-3 flex-1">
+              <p className="text-xs text-gray-500 mb-3">
+                {section.description}
+              </p>
+              <div className="flex flex-wrap gap-1">
+                <Link
+                  to={section.listPath}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded"
+                >
+                  <Search size={11} /> Detalii
+                </Link>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Audit events */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
+          <h5 className="font-semibold text-gray-800">
+            Evenimente recente (audit)
+          </h5>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500">Total: {total}</span>
+            <button
+              onClick={() => fetchEvents(page)}
+              disabled={loading}
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded disabled:opacity-40"
+            >
+              <RefreshCw size={12} className={loading ? 'animate-spin' : ''} /> Reîncarcă
+            </button>
+          </div>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+          <div className="m-4 p-3 bg-red-100 text-red-700 rounded text-sm">
             {error}
           </div>
         )}
 
-        {/* ── Stats ─────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-          <StatCard
-            icon={FileText}
-            title="Registre"
-            value={stats.registre}
-            color="blue"
-          />
-          <StatCard
-            icon={Users}
-            title="Utilizatori"
-            value={stats.utilizatori}
-            color="green"
-          />
-          <StatCard
-            icon={Archive}
-            title="Fișiere"
-            value={stats.fisiere}
-            color="orange"
-          />
-          <StatCard
-            icon={Building2}
-            title="Departamente"
-            value={stats.departamente}
-            color="red"
-          />
-          <StatCard
-            icon={Handshake}
-            title="Parteneri"
-            value={stats.parteneri}
-            color="teal"
-          />
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-gray-50 text-xs text-gray-600 uppercase tracking-wide border-b border-gray-200">
+              <tr>
+                <th className="px-4 py-2">Data</th>
+                <th className="px-4 py-2">Utilizator</th>
+                <th className="px-4 py-2">Acțiune</th>
+                <th className="px-4 py-2">Entitate</th>
+                <th className="px-4 py-2">ID Entitate</th>
+                <th className="px-4 py-2">Rezumat</th>
+                <th className="px-4 py-2">IP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-4 py-6 text-center text-gray-400"
+                  >
+                    Se încarcă...
+                  </td>
+                </tr>
+              ) : events.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-4 py-6 text-center text-gray-400"
+                  >
+                    Nu există evenimente înregistrate.
+                  </td>
+                </tr>
+              ) : (
+                events.map((ev) => (
+                  <tr
+                    key={ev.id}
+                    className="border-b hover:bg-gray-50 even:bg-gray-50/50"
+                  >
+                    <td className="px-4 py-2 whitespace-nowrap text-gray-600 text-xs">
+                      {ev.created_at
+                        ? new Date(ev.created_at).toLocaleString('ro-RO')
+                        : '-'}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-gray-800 text-xs">
+                      {ev.actor_name ?? ev.actor_email ?? (
+                        <span className="text-gray-400 italic">sistem</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${ACTION_COLORS[ev.action] ?? 'bg-gray-100 text-gray-700'}`}
+                      >
+                        {ev.action}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-gray-700 text-xs">
+                      {ev.entity_type ?? '-'}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-gray-500 text-xs">
+                      {ev.entity_id ?? '-'}
+                    </td>
+                    <td className="px-4 py-2 text-gray-700 text-xs max-w-xs truncate">
+                      {ev.summary ?? '-'}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-gray-400 text-xs">
+                      {ev.ip_address ?? '-'}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
 
-        {/* ── Content ───────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Recent registrations */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <Clock size={18} className="text-blue-500" />
-              Înregistrări recente
-            </h3>
-            <RecentTable rows={recentRegistre} />
+        {/* Pagination */}
+        <div className="px-5 py-3 border-t border-gray-200 flex items-center justify-between text-sm text-gray-600">
+          <span>
+            Pagina {page} din {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage((p) => p - 1)}
+              disabled={page <= 1}
+              className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded disabled:opacity-40 text-xs"
+            >
+              <ChevronLeft size={13} /> Anterior
+            </button>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page >= totalPages}
+              className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded disabled:opacity-40 text-xs"
+            >
+              Următor <ChevronRight size={13} />
+            </button>
           </div>
-
-          {/* Department tree */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <Building2 size={18} className="text-red-500" />
-              Structura organizatorică
-            </h3>
-            {departments.length > 0 ? (
-              <TreeAccordion data={departments} />
-            ) : (
-              <p className="text-gray-400 text-sm">Se încarcă structura…</p>
-            )}
-          </div>
-        </div>
-
-        {/* ── Admin actions ──────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 gap-6">
-          <AdminCard
-            icon={Building2}
-            title="Departamente"
-            count={countDeps}
-            color="red"
-          >
-            <AddDepartmentModal onSubmit={() => setCountDeps((n) => n + 1)} />
-            <ListaDepartementModal refreshKey={countDeps} />
-          </AdminCard>
-
-          <AdminCard
-            icon={Users}
-            title="Utilizatori"
-            count={countUsers}
-            color="green"
-          >
-            <AddUserModal onSubmit={() => setCountUsers((n) => n + 1)} />
-            <ListUsersModal
-              refreshKey={countUsers}
-              onAddUser={() => setCountUsers((n) => n + 1)}
-              onDeleteUser={() => setCountUsers((n) => n - 1)}
-            />
-          </AdminCard>
-
-          <AdminCard
-            icon={Handshake}
-            title="Parteneri"
-            count={countPartners}
-            color="teal"
-          >
-            <ListPartner />
-          </AdminCard>
-
-          <AdminCard
-            icon={FileText}
-            title="Registre"
-            count={stats.registre}
-            color="blue"
-          >
-            <p className="text-sm text-gray-500">
-              Pentru gestionarea registrelor, accesați secțiunea{' '}
-              <a
-                href="/admin/registre"
-                className="text-blue-600 hover:underline"
-              >
-                Registre
-              </a>{' '}
-              din meniul lateral.
-            </p>
-          </AdminCard>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

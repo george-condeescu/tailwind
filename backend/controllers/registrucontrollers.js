@@ -5,6 +5,16 @@ import sequelize from '../utils/database.js';
 import { myCache } from '../middleware/cacheMiddleware.js';
 import logAuditEvent from '../services/auditService.js';
 
+// Helper: audit în afara unei tranzacții (pentru citiri și cazuri de eroare)
+const auditWithNewConn = async (req, data) => {
+  const conn = await sequelize.connectionManager.getConnection({ type: 'write' });
+  try {
+    await logAuditEvent(conn, { req, ...data });
+  } finally {
+    sequelize.connectionManager.releaseConnection(conn);
+  }
+};
+
 // Create Registru -> POST /api/registru
 const createRegistru = async (req, res) => {
   const key = '__cache__' + req.originalUrl; // Cache key based on the request URL
@@ -45,6 +55,12 @@ const createRegistru = async (req, res) => {
     res.status(201).json(result);
   } catch (error) {
     console.error('Error creating registru:', error);
+    await auditWithNewConn(req, {
+      action: 'CREATE_ERROR',
+      entity_type: 'DOCUMENT',
+      entity_id: req.body.nr_inreg ?? null,
+      summary: `Eroare la crearea registrului: ${error.message}`,
+    }).catch((e) => console.error('Audit error:', e));
     res.status(500).json({ error: error.message });
   }
 };
@@ -72,9 +88,21 @@ const findAllRegistru = async (req, res) => {
       ],
     });
     myCache.set(key, registruri, 300);
+    await auditWithNewConn(req, {
+      action: 'READ',
+      entity_type: 'DOCUMENT',
+      entity_id: null,
+      summary: `Listare toate registrele (${registruri.length} rezultate).`,
+    }).catch((e) => console.error('Audit error:', e));
     res.json(registruri);
   } catch (error) {
     console.error('Error fetching registruri:', error);
+    await auditWithNewConn(req, {
+      action: 'READ_ERROR',
+      entity_type: 'DOCUMENT',
+      entity_id: null,
+      summary: `Eroare la listarea registrelor: ${error.message}`,
+    }).catch((e) => console.error('Audit error:', e));
     res.status(500).json({ error: error.message });
   }
 };
@@ -91,12 +119,30 @@ const getRegistruByNrInreg = async (req, res) => {
       req.params.nr_inreg,
     );
     if (!registru) {
+      await auditWithNewConn(req, {
+        action: 'READ_NOT_FOUND',
+        entity_type: 'DOCUMENT',
+        entity_id: req.params.nr_inreg,
+        summary: `Registru cu nr_inreg: ${req.params.nr_inreg} nu a fost găsit.`,
+      }).catch((e) => console.error('Audit error:', e));
       return res.status(404).json({ error: 'Registru not found' });
     }
     myCache.set(key, registru, 300);
+    await auditWithNewConn(req, {
+      action: 'READ',
+      entity_type: 'DOCUMENT',
+      entity_id: req.params.nr_inreg,
+      summary: `Registru cu nr_inreg: ${req.params.nr_inreg} accesat.`,
+    }).catch((e) => console.error('Audit error:', e));
     res.json(registru);
   } catch (error) {
     console.error('Error fetching registru:', error);
+    await auditWithNewConn(req, {
+      action: 'READ_ERROR',
+      entity_type: 'DOCUMENT',
+      entity_id: req.params.nr_inreg,
+      summary: `Eroare la accesarea registrului ${req.params.nr_inreg}: ${error.message}`,
+    }).catch((e) => console.error('Audit error:', e));
     res.status(500).json({ error: error.message });
   }
 };
@@ -130,6 +176,12 @@ const updateRegistru = async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error updating registru:', error);
+    await auditWithNewConn(req, {
+      action: 'UPDATE_ERROR',
+      entity_type: 'DOCUMENT',
+      entity_id: req.params.nr_inreg,
+      summary: `Eroare la actualizarea registrului ${req.params.nr_inreg}: ${error.message}`,
+    }).catch((e) => console.error('Audit error:', e));
     res.status(500).json({ error: error.message });
   }
 };
@@ -155,7 +207,12 @@ const deleteRegistru = async (req, res) => {
     });
     res.status(204).send();
   } catch (error) {
-    // console.error('Error deleting registru:', error);
+    await auditWithNewConn(req, {
+      action: 'DELETE_ERROR',
+      entity_type: 'DOCUMENT',
+      entity_id: req.params.nr_inreg,
+      summary: `Eroare la ștergerea registrului ${req.params.nr_inreg}: ${error.message}`,
+    }).catch((e) => console.error('Audit error:', e));
     res.status(error.status || 500).json({ error: error.message });
   }
 };
@@ -259,9 +316,23 @@ const searchRegistru = async (req, res) => {
       order: [['createdAt', 'DESC']],
     });
 
+    await auditWithNewConn(req, {
+      action: 'SEARCH',
+      entity_type: 'DOCUMENT',
+      entity_id: null,
+      summary: `Căutare registre: ${results.length} rezultate găsite.`,
+      after_data: { filters: req.query, count: results.length },
+    }).catch((e) => console.error('Audit error:', e));
     res.json(results);
   } catch (error) {
     console.error('Error searching registru:', error);
+    await auditWithNewConn(req, {
+      action: 'SEARCH_ERROR',
+      entity_type: 'DOCUMENT',
+      entity_id: null,
+      summary: `Eroare la căutarea registrelor: ${error.message}`,
+      after_data: { filters: req.query },
+    }).catch((e) => console.error('Audit error:', e));
     res.status(500).json({ error: error.message });
   }
 };

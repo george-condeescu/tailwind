@@ -4,9 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../api/axiosInstance';
 
 import {
-  Handshake,
   Home,
-  Users,
   Settings,
   FileText,
   FileStack,
@@ -15,11 +13,10 @@ import {
   Layers,
   Search,
   Key,
-  Landmark,
   Boxes,
-  LayoutDashboard,
   Library,
   TicketCheck,
+  Landmark,
 } from 'lucide-react';
 
 // Left Menu Component
@@ -102,61 +99,61 @@ export default function LeftMenu({ isMobileMenuOpen, setIsMobileMenuOpen }) {
     },
     {
       icon: TicketCheck,
-      label: 'Tichete',
+      label: 'Suport',
       active: false,
       href: '/tickets',
       admin: false,
     },
 
-    {
-      icon: Users,
-      label: 'Utilizatori',
-      active: false,
-      href: '/admin/users',
-      admin: true,
-    },
+    // {
+    //   icon: Users,
+    //   label: 'Utilizatori',
+    //   active: false,
+    //   href: '/admin/users',
+    //   admin: true,
+    // },
+    // {
+    //   icon: Landmark,
+    //   label: 'Departamente',
+    //   active: false,
+    //   href: '/admin/departments',
+    //   admin: true,
+    // },
+    // {
+    //   icon: Handshake,
+    //   label: 'Parteneri',
+    //   active: false,
+    //   href: '/admin/partners',
+    //   admin: true,
+    // },
+    // {
+    //   icon: LayoutDashboard,
+    //   label: 'Toate registrele',
+    //   active: false,
+    //   href: '/admin/registers',
+    //   admin: true,
+    // },
+    // {
+    //   icon: FileStack,
+    //   label: 'Toate documentele',
+    //   active: false,
+    //   href: '/admin/documents',
+    //   admin: true,
+    // },
     {
       icon: Landmark,
-      label: 'Departamente',
-      active: false,
-      href: '/admin/departments',
-      admin: true,
-    },
-    {
-      icon: Handshake,
-      label: 'Parteneri',
-      active: false,
-      href: '/admin/partners',
-      admin: true,
-    },
-    {
-      icon: LayoutDashboard,
-      label: 'Toate registrele',
-      active: false,
-      href: '/admin/registers',
-      admin: true,
-    },
-    {
-      icon: FileStack,
-      label: 'Toate documentele',
-      active: false,
-      href: '/admin/documents',
-      admin: true,
-    },
-    {
-      icon: Settings,
       label: 'Dashboard',
       active: false,
       href: '/admin/dashboard',
       admin: true,
     },
-    {
-      icon: TicketCheck,
-      label: 'Tichete suport',
-      active: false,
-      href: '/admin/tickets',
-      admin: true,
-    },
+    // {
+    //   icon: Settings,
+    //   label: 'Setări',
+    //   active: false,
+    //   href: '/admin/settings',
+    //   admin: true,
+    // },
     {
       icon: FileStack,
       label: 'Golește Cache',

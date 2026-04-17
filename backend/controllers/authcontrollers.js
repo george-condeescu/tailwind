@@ -18,40 +18,84 @@ import logAuditEvent from '../services/auditService.js';
 //getUserById - doar admin sau user-ul in cauza poate accesa endpoint-ul - get /api/auth/users/:id
 const getUserById = async (req, res) => {
   const userId = req.params.id;
-
-  const user = await User.findByPk(userId, {
-    attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
-  });
-  if (!user) {
-    return res.status(404).json({ message: 'User not found' });
+  try {
+    const user = await User.findByPk(userId, {
+      attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
+    });
+    if (!user) {
+      await logAuditEvent(pool, {
+        req,
+        action: 'READ_NOT_FOUND',
+        entity_type: 'USER',
+        entity_id: userId,
+        summary: `Utilizatorul cu ID: ${userId} nu a fost găsit.`,
+      });
+      return res.status(404).json({ message: 'User not found' });
+    }
+    //obtin departamentul utilizatorului
+    const memberships = await user.getMemberships({
+      order: [['createdAt', 'DESC']], // Selecteaza cel mai recent user_membership
+    });
+    if (memberships && memberships.length > 0) {
+      const orgUnit = await memberships[0].getOrgUnit();
+      user.dataValues.department = orgUnit ? orgUnit.name : null;
+      user.dataValues.org_unit_id = orgUnit ? orgUnit.id : null;
+    } else {
+      user.dataValues.department = null;
+      user.dataValues.org_unit_id = null;
+    }
+    const key = '__cache__' + req.originalUrl;
+    myCache.set(key, user, 300); // Cache the user data for 5 minutes
+    await logAuditEvent(pool, {
+      req,
+      action: 'READ',
+      entity_type: 'USER',
+      entity_id: userId,
+      summary: `Utilizatorul cu ID: ${userId} accesat.`,
+    });
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching user by ID:', error);
+    await logAuditEvent(pool, {
+      req,
+      action: 'READ_ERROR',
+      entity_type: 'USER',
+      entity_id: userId,
+      summary: `Eroare la accesarea utilizatorului cu ID: ${userId}: ${error.message}`,
+    }).catch((e) => console.error('Audit error:', e));
+    res.status(500).json({ message: 'Error fetching user', error: error.message });
   }
-  //obtin departamentul utilizatorului
-  const memberships = await user.getMemberships({
-    order: [['createdAt', 'DESC']], // Selecteaza cel mai recent user_membership
-  });
-  if (memberships && memberships.length > 0) {
-    const orgUnit = await memberships[0].getOrgUnit();
-    user.dataValues.department = orgUnit ? orgUnit.name : null;
-    user.dataValues.org_unit_id = orgUnit ? orgUnit.id : null;
-  } else {
-    user.dataValues.department = null;
-    user.dataValues.org_unit_id = null;
-  }
-  const key = '__cache__' + req.originalUrl;
-  myCache.set(key, user, 300); // Cache the user data for 5 minutes
-  res.json(user);
 };
 
 //get all users - doar admin poate accesa endpoint-ul - get /api/auth/users
 const getAllUsers = async (req, res) => {
-  const response = await User.findAndCountAll({
-    attributes: { exclude: ['password'] },
-  });
+  try {
+    const response = await User.findAndCountAll({
+      attributes: { exclude: ['password'] },
+    });
 
-  const key = '__cache__' + req.originalUrl;
-  const dataToCache = { users: response.rows, count: response.count };
-  myCache.set(key, dataToCache, 300); // Cache the users data for 5 minutes
-  res.json({ users: response.rows, count: response.count });
+    const key = '__cache__' + req.originalUrl;
+    const dataToCache = { users: response.rows, count: response.count };
+    myCache.set(key, dataToCache, 300); // Cache the users data for 5 minutes
+    await logAuditEvent(pool, {
+      req,
+      action: 'READ',
+      entity_type: 'USER',
+      entity_id: null,
+      summary: `Listare toți utilizatorii (${response.count} rezultate).`,
+    });
+    res.json({ users: response.rows, count: response.count });
+  } catch (error) {
+    console.error('Error fetching all users:', error);
+    await logAuditEvent(pool, {
+      req,
+      action: 'READ_ERROR',
+      entity_type: 'USER',
+      entity_id: null,
+      summary: `Eroare la listarea utilizatorilor: ${error.message}`,
+    }).catch((e) => console.error('Audit error:', e));
+    res.status(500).json({ message: 'Error fetching users', error: error.message });
+  }
 };
 
 // Register a new user => POST /api/auth/register
@@ -87,6 +131,13 @@ const register = async (req, res) => {
   });
 
   if (existingUser) {
+    await logAuditEvent(pool, {
+      req,
+      action: 'CREATE_DENIED',
+      entity_type: 'USER',
+      entity_id: null,
+      summary: `Înregistrare refuzată: email sau username deja folosit (${email}).`,
+    });
     return res
       .status(400)
       .json({ success: false, error: 'Email or username already in use' });
@@ -96,6 +147,13 @@ const register = async (req, res) => {
   const existDepart = await OrgUnit.findOne({ where: { id: org_unit_id } });
 
   if (!existDepart) {
+    await logAuditEvent(pool, {
+      req,
+      action: 'CREATE_DENIED',
+      entity_type: 'USER',
+      entity_id: null,
+      summary: `Înregistrare refuzată: org_unit_id ${org_unit_id} nu există.`,
+    });
     return res.status(400).json({
       success: false,
       error: 'Organization ID not exists.',
@@ -160,9 +218,17 @@ const register = async (req, res) => {
     console.error('ERR message:', error.message);
     console.error('ERR errors:', error.errors);
     console.error('ERR original:', error.original);
+    await logAuditEvent(pool, {
+      req,
+      action: 'CREATE_ERROR',
+      entity_type: 'USER',
+      entity_id: null,
+      summary: `Eroare la înregistrarea utilizatorului (${email}): ${error.message}`,
+    }).catch((e) => console.error('Audit error:', e));
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
 // Login a user
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -252,44 +318,82 @@ const login = async (req, res) => {
 
 //Logout user
 const logout = async (req, res) => {
-  // Invalidate the token on the client side by clearing it from storage
-  req.session.token = null; // Clear the token from the session
+  try {
+    // Invalidate the token on the client side by clearing it from storage
+    req.session.token = null; // Clear the token from the session
 
-  // LOGOUT SUCCES
-  await logAuditEvent(pool, {
-    req,
-    actor_user_id: req.user ? req.user.id : null,
-    actor_org_unit_id: req.user ? req.user.org_id : null,
-    action: 'LOGOUT',
-    entity_type: 'USER',
-    entity_id: req.user ? req.user.id : null,
-    summary: `Utilizatorul ${req.user ? req.user.username : 'Unknown'} s-a deconectat.`,
-  });
-  res.json({ message: 'User logged out successfully' });
+    // LOGOUT SUCCES
+    await logAuditEvent(pool, {
+      req,
+      actor_user_id: req.user ? req.user.id : null,
+      actor_org_unit_id: req.user ? req.user.org_id : null,
+      action: 'LOGOUT',
+      entity_type: 'USER',
+      entity_id: req.user ? req.user.id : null,
+      summary: `Utilizatorul ${req.user ? req.user.username : 'Unknown'} s-a deconectat.`,
+    });
+    res.json({ message: 'User logged out successfully' });
+  } catch (error) {
+    console.error('Error during logout:', error);
+    await logAuditEvent(pool, {
+      req,
+      action: 'LOGOUT_ERROR',
+      entity_type: 'USER',
+      entity_id: req.user ? req.user.id : null,
+      summary: `Eroare la deconectarea utilizatorului: ${error.message}`,
+    }).catch((e) => console.error('Audit error:', e));
+    res.status(500).json({ message: 'Error during logout', error: error.message });
+  }
 };
 
 //get user profile - doar admin sau user-ul in cauza poate accesa endpoint-ul - get /api/auth/admin/users/profile/:id
 const getProfile = async (req, res) => {
   const userId = req.user.userId;
   console.log('Fetching profile for user ID:', userId);
-  const user = await User.findByPk(userId, {
-    attributes: { exclude: ['password'] },
-  });
-  if (!user) {
-    return res.status(404).json({ message: 'User not found' });
+  try {
+    const user = await User.findByPk(userId, {
+      attributes: { exclude: ['password'] },
+    });
+    if (!user) {
+      await logAuditEvent(pool, {
+        req,
+        action: 'READ_NOT_FOUND',
+        entity_type: 'USER',
+        entity_id: userId,
+        summary: `Profilul utilizatorului cu ID: ${userId} nu a fost găsit.`,
+      });
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const memberships = await user.getMemberships({
+      order: [['createdAt', 'DESC']], // Selecteaza cel mai recent user_membership
+    });
+    if (memberships && memberships.length > 0) {
+      const orgUnit = await memberships[0].getOrgUnit();
+      user.dataValues.department = orgUnit ? orgUnit.name : null;
+      user.dataValues.org_unit_id = orgUnit ? orgUnit.id : null;
+    } else {
+      user.dataValues.department = null;
+      user.dataValues.org_unit_id = null;
+    }
+    await logAuditEvent(pool, {
+      req,
+      action: 'READ',
+      entity_type: 'USER',
+      entity_id: userId,
+      summary: `Profil accesat pentru utilizatorul cu ID: ${userId}.`,
+    });
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    await logAuditEvent(pool, {
+      req,
+      action: 'READ_ERROR',
+      entity_type: 'USER',
+      entity_id: userId,
+      summary: `Eroare la accesarea profilului utilizatorului cu ID: ${userId}: ${error.message}`,
+    }).catch((e) => console.error('Audit error:', e));
+    res.status(500).json({ message: 'Error fetching profile', error: error.message });
   }
-  const memberships = await user.getMemberships({
-    order: [['createdAt', 'DESC']], // Selecteaza cel mai recent user_membership
-  });
-  if (memberships && memberships.length > 0) {
-    const orgUnit = await memberships[0].getOrgUnit();
-    user.dataValues.department = orgUnit ? orgUnit.name : null;
-    user.dataValues.org_unit_id = orgUnit ? orgUnit.id : null;
-  } else {
-    user.dataValues.department = null;
-    user.dataValues.org_unit_id = null;
-  }
-  res.json(user);
 };
 
 //update user profile (admin sau user) - put /api/auth/profile sau /api/auth/admin/users/profile/:id
@@ -317,12 +421,19 @@ const updateProfile = async (req, res) => {
     return res.status(400).json({ errors });
   }
 
-  const { username, full_name, email, password, is_admin, is_active } =
+  const { username, full_name, email, is_admin, is_active } =
     userData.data;
   const { start_date, end_date, org_unit_id } = membershipData.data;
 
   const user = await User.findByPk(userId);
   if (!user) {
+    await logAuditEvent(pool, {
+      req,
+      action: 'UPDATE_NOT_FOUND',
+      entity_type: 'USER',
+      entity_id: userId,
+      summary: `Actualizare profil refuzată: utilizatorul cu ID: ${userId} nu există.`,
+    });
     return res.status(404).json({ message: 'User not found' });
   }
 
@@ -330,11 +441,20 @@ const updateProfile = async (req, res) => {
   const existDepart = await OrgUnit.findByPk(org_unit_id);
 
   if (!existDepart) {
+    await logAuditEvent(pool, {
+      req,
+      action: 'UPDATE_DENIED',
+      entity_type: 'USER',
+      entity_id: userId,
+      summary: `Actualizare profil refuzată: org_unit_id ${org_unit_id} nu există.`,
+    });
     return res.status(400).json({
       status: false,
       message: 'Organization ID not exists.',
     });
   }
+
+  const before = user.toJSON();
 
   try {
     await User.sequelize.transaction(async (t) => {
@@ -380,9 +500,20 @@ const updateProfile = async (req, res) => {
     myCache.del('__cache__/api/auth/admin/users'); // Clear cache for all users
     myCache.del(`__cache__/api/auth/admin/users/${userId}`); // Clear cache for the specific user
 
+    const updatedUser = await user.reload();
+    await logAuditEvent(pool, {
+      req,
+      action: 'UPDATE',
+      entity_type: 'USER',
+      entity_id: userId,
+      summary: `Profilul utilizatorului cu ID: ${userId} actualizat.`,
+      before_data: before,
+      after_data: updatedUser,
+    });
+
     res.json({
       message: 'Profile updated successfully',
-      user: await user.reload(),
+      user: updatedUser,
       memberships: await user.getMemberships(),
     });
   } catch (error) {
@@ -390,6 +521,13 @@ const updateProfile = async (req, res) => {
     console.error('ERR message:', error.message);
     console.error('ERR errors:', error.errors);
     console.error('ERR original:', error.original);
+    await logAuditEvent(pool, {
+      req,
+      action: 'UPDATE_ERROR',
+      entity_type: 'USER',
+      entity_id: userId,
+      summary: `Eroare la actualizarea profilului utilizatorului cu ID: ${userId}: ${error.message}`,
+    }).catch((e) => console.error('Audit error:', e));
     res
       .status(500)
       .json({ message: 'Error updating profile', error: error.message });
@@ -399,43 +537,78 @@ const updateProfile = async (req, res) => {
 // delete user - doar admin - delete /api/auth/admin/users/:id
 const deleteUser = async (req, res) => {
   const userId = req.params.id;
-  const user = await User.findByPk(userId);
-  if (!user) {
-    return res.status(404).json({ message: 'User not found' });
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      await logAuditEvent(pool, {
+        req,
+        action: 'DELETE_NOT_FOUND',
+        entity_type: 'USER',
+        entity_id: userId,
+        summary: `Ștergere refuzată: utilizatorul cu ID: ${userId} nu există.`,
+      });
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const before = user.toJSON();
+    await user.destroy();
+    myCache.del('__cache__/api/auth/admin/users'); // Clear cache for all users
+    myCache.del(`__cache__/api/auth/admin/users/${userId}`); // Clear cache for the specific user
+    await logAuditEvent(pool, {
+      req,
+      action: 'DELETE',
+      entity_type: 'USER',
+      entity_id: userId,
+      summary: `Utilizatorul cu ID: ${userId} șters.`,
+      before_data: before,
+    });
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    await logAuditEvent(pool, {
+      req,
+      action: 'DELETE_ERROR',
+      entity_type: 'USER',
+      entity_id: userId,
+      summary: `Eroare la ștergerea utilizatorului cu ID: ${userId}: ${error.message}`,
+    }).catch((e) => console.error('Audit error:', e));
+    res.status(500).json({ message: 'Error deleting user', error: error.message });
   }
-  await user.destroy();
-  myCache.del('__cache__/api/auth/admin/users'); // Clear cache for all users
-  myCache.del(`__cache__/api/auth/admin/users/${userId}`); // Clear cache for the specific user
-  res.json({ message: 'User deleted successfully' });
 };
 
 //forgot password - send email with reset link - post /api/auth/forgot-password
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
-  const user = await User.findOne({ where: { email } });
-  if (!user) {
-    return res.status(404).json({ message: 'User not found' });
-  }
-  // Aici ar trebui să adaugi logica pentru a trimite emailul cu linkul de resetare a parolei
-  //reset token
-  const resetToken = bcrypt.hashSync(email, 10, function (err, hash) {
-    if (err) {
-      console.error('Error generating reset token:', err);
-      return null;
-    }
-    return hash;
-  });
-  //set reset token in database for user
-  user.resetPasswordToken = resetToken;
-  //set token expiration time to 30 minutes
-  user.resetPasswordExpire = Date.now() + 30 * 60 * 1000; //30 minutes expiration time
-  await user.save();
-
-  await user.reload();
-  const resetUrl = `http://localhost:5173/reset-password?token=${encodeURIComponent(resetToken)}`;
-  const message = `Hello ${user.full_name},\n\nDvs. ati solicitat resetarea parolei. Vă rugăm să faceți clic pe linkul de mai jos pentru a vă reseta parola:\n\n${resetUrl}\n\nDacă nu ați solicitat acest lucru, vă rugăm să ignorați acest email.\n\nCu stimă,\nAdmin\nCJ Teleorman.`;
-
   try {
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      await logAuditEvent(pool, {
+        req,
+        action: 'FORGOT_PASSWORD_NOT_FOUND',
+        entity_type: 'USER',
+        entity_id: null,
+        summary: `Resetare parolă solicitată pentru email inexistent: ${email}.`,
+      });
+      return res.status(404).json({ message: 'User not found' });
+    }
+    // Aici ar trebui să adaugi logica pentru a trimite emailul cu linkul de resetare a parolei
+    //reset token
+    const resetToken = bcrypt.hashSync(email, 10, function (err, hash) {
+      if (err) {
+        console.error('Error generating reset token:', err);
+        return null;
+      }
+      return hash;
+    });
+    //set reset token in database for user
+    user.resetPasswordToken = resetToken;
+    //set token expiration time to 30 minutes
+    user.resetPasswordExpire = Date.now() + 30 * 60 * 1000; //30 minutes expiration time
+    await user.save();
+
+    await user.reload();
+    const resetUrl = `http://localhost:5173/reset-password?token=${encodeURIComponent(resetToken)}`;
+    const message = `Hello ${user.full_name},\n\nDvs. ati solicitat resetarea parolei. Vă rugăm să faceți clic pe linkul de mai jos pentru a vă reseta parola:\n\n${resetUrl}\n\nDacă nu ați solicitat acest lucru, vă rugăm să ignorați acest email.\n\nCu stimă,\nAdmin\nCJ Teleorman.`;
+
     // Aici ar trebui să adaugi logica pentru a trimite emailul folosind un serviciu de email (ex: nodemailer)
     await sendEmail({
       email,
@@ -443,15 +616,32 @@ const forgotPassword = async (req, res) => {
       message,
     });
 
+    await logAuditEvent(pool, {
+      req,
+      action: 'FORGOT_PASSWORD',
+      entity_type: 'USER',
+      entity_id: user.id,
+      summary: `Email de resetare parolă trimis utilizatorului cu ID: ${user.id} (${email}).`,
+    });
+
     res.status(200).json({
       message: 'Email sent to: ' + email,
     });
   } catch (error) {
     console.error('Error sending reset email:', error);
-    user.resetPasswordToken = null;
-    user.resetPasswordExpire = null;
-    await user.save();
-    await user.reload();
+    const user = await User.findOne({ where: { email } }).catch(() => null);
+    if (user) {
+      user.resetPasswordToken = null;
+      user.resetPasswordExpire = null;
+      await user.save().catch(() => {});
+    }
+    await logAuditEvent(pool, {
+      req,
+      action: 'FORGOT_PASSWORD_ERROR',
+      entity_type: 'USER',
+      entity_id: user ? user.id : null,
+      summary: `Eroare la trimiterea emailului de resetare parolă pentru ${email}: ${error.message}`,
+    }).catch((e) => console.error('Audit error:', e));
     res.status(500).json({ message: 'Error sending reset email' });
   }
 };
@@ -459,33 +649,63 @@ const forgotPassword = async (req, res) => {
 //reset password - post /api/auth/reset-password/:token
 const resetPassword = async (req, res) => {
   const token = req.body.token;
-  const resetPasswordExpire = req.body.resetPasswordExpire;
 
-  const allUsers = await User.findAll({
-    attributes: ['id', 'email', 'resetPasswordToken', 'resetPasswordExpire'],
-  });
+  try {
+    const user = await User.findOne({
+      where: {
+        resetPasswordToken: token,
+        resetPasswordExpire: { [Op.gt]: Date.now() },
+      },
+    });
 
-  const user = await User.findOne({
-    where: {
-      resetPasswordToken: token,
-      resetPasswordExpire: { [Op.gt]: Date.now() },
-    },
-  });
+    if (!user) {
+      await logAuditEvent(pool, {
+        req,
+        action: 'RESET_PASSWORD_INVALID',
+        entity_type: 'USER',
+        entity_id: null,
+        summary: `Resetare parolă eșuată: token invalid sau expirat.`,
+      });
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
 
-  if (!user) {
-    return res.status(400).json({ message: 'Invalid or expired reset token' });
+    if (req.body.password !== req.body.confirmPassword) {
+      await logAuditEvent(pool, {
+        req,
+        action: 'RESET_PASSWORD_MISMATCH',
+        entity_type: 'USER',
+        entity_id: user.id,
+        summary: `Resetare parolă eșuată pentru utilizatorul cu ID: ${user.id}: parolele nu coincid.`,
+      });
+      return res.status(400).json({ message: 'Password does not match' });
+    }
+
+    user.password = await bcrypt.hash(req.body.password, 10);
+    user.resetPasswordToken = null;
+    user.resetPasswordExpire = null;
+
+    await user.save();
+
+    await logAuditEvent(pool, {
+      req,
+      action: 'RESET_PASSWORD',
+      entity_type: 'USER',
+      entity_id: user.id,
+      summary: `Parola utilizatorului cu ID: ${user.id} a fost resetată cu succes.`,
+    });
+
+    res.status(200).json({ message: 'Password reset successful' });
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    await logAuditEvent(pool, {
+      req,
+      action: 'RESET_PASSWORD_ERROR',
+      entity_type: 'USER',
+      entity_id: null,
+      summary: `Eroare la resetarea parolei: ${error.message}`,
+    }).catch((e) => console.error('Audit error:', e));
+    res.status(500).json({ message: 'Error resetting password', error: error.message });
   }
-
-  if (req.body.password !== req.body.confirmPassword) {
-    return res.status(400).json({ message: 'Password does not match' });
-  }
-
-  user.password = await bcrypt.hash(req.body.password, 10);
-  user.resetPasswordToken = null;
-  user.resetPasswordExpire = null;
-
-  await user.save();
-  res.status(200).json({ message: 'Password reset successful' });
 };
 
 export {

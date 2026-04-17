@@ -148,7 +148,7 @@ const getDocumentsByNrInreg = async (req, res) => {
 const updateDocument = async (req, res) => {
   const key = '__cache__' + req.originalUrl;
 
-  console.log(`Received request to update Document with ID ${req.params.id}`);
+  // console.log(`Received request to update Document with ID ${req.params.id}`);
   try {
     const result = await sequelize.transaction(async (t) => {
       const updatedDocument = await documentService.updateDocument(

@@ -169,7 +169,7 @@ export default function Login({ isOpen: propIsOpen }) {
             </div>
             <div>
               <label className="block mb-2 text-indigo-500" htmlFor="password">
-                Password
+                Parola
               </label>
               <input
                 className={`w-full p-2 mb-6 text-indigo-700 border-b-2 border-indigo-500 outline-none bg-white ${errors.password ? 'border-red-500' : ''}`}
@@ -215,7 +215,7 @@ export default function Login({ isOpen: propIsOpen }) {
             type="button"
             onClick={handleClose}
           >
-            Close
+            Închide
           </button>
         </Modal.Footer>
       </Modal>
