@@ -200,6 +200,9 @@ const updateRegistru = async (req, res) => {
         after_data: updatedRegistru,
       });
       myCache.del(key);
+      myCache.keys()
+        .filter((k) => k.startsWith('__cache__/api/documents'))
+        .forEach((k) => myCache.del(k));
       return updatedRegistru;
     });
     res.json(result);
