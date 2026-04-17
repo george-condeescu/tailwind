@@ -143,6 +143,7 @@ export default function AdaugaDocumentIntern() {
       });
 
       toast.success('Registru adăugat cu succes!');
+      queryClient.invalidateQueries({ queryKey: ['documents', user.id] });
       setShowModal(false); // Închidem modalul după ce registrul a fost adăugat cu succes
       navigate('/inbox'); // Redirecționăm utilizatorul către pagina de documente interne
     } catch (error) {

@@ -76,6 +76,9 @@ const createRegistru = async (req, res) => {
         after_data: newRegistru,
       });
       myCache.del(key);
+      myCache.keys()
+        .filter((k) => k.startsWith('__cache__/api/documents'))
+        .forEach((k) => myCache.del(k));
       return newRegistru;
     });
     res.status(201).json(result);
