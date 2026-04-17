@@ -1,6 +1,8 @@
 import { Op, literal } from 'sequelize';
 import { Registru, Document, Partner, User, Nrinreg } from '../models/index.js';
 import registruService from '../services/registruService.js';
+import documentService from '../services/documentService.js';
+import circulatieService from '../services/circulatieService.js';
 import sequelize from '../utils/database.js';
 import { myCache } from '../middleware/cacheMiddleware.js';
 import logAuditEvent from '../services/auditService.js';
@@ -32,6 +34,30 @@ const createRegistru = async (req, res) => {
   try {
     const result = await sequelize.transaction(async (t) => {
       const newRegistru = await registruService.createRegistru(req.body, t);
+
+      const newDocument = await documentService.createDocument(
+        {
+          nr_inreg: newRegistru.nr_inreg,
+          nr_revizie: 0,
+          created_by_user_id: req.body.user_id,
+          current_user_id: req.body.user_id,
+          content_snapshot: JSON.stringify(newRegistru),
+          note: 'Creare inițială',
+        },
+        t,
+      );
+
+      await circulatieService.createCirculatie(
+        {
+          document_id: newDocument.id,
+          action: 'RECEIVE',
+          from_user_id: req.body.user_id,
+          to_user_id: null,
+          note: 'Creare inițială',
+        },
+        t,
+      );
+
       if (!last_number) {
         await Nrinreg.create(
           { departament, year, last_number: nextIndex },

@@ -4,13 +4,9 @@ export const documentCreateSchema = z.object({
   nr_inreg: z.string().max(20, {
     message: 'Numărul de înregistrare trebuie să aibă maximum 20 de caractere',
   }),
-  nr_revizie: z
-    .number()
-    .int()
-    .min(0, {
-      message: 'Numărul de revizie trebuie să fie un număr întreg nenegativ',
-    })
-    .optional(),
+  nr_revizie: z.number().int().min(0, {
+    message: 'Numărul de revizie trebuie să fie un număr întreg nenegativ',
+  }).optional().default(0),
   created_by_user_id: z.number().int().positive({
     message:
       'ID-ul utilizatorului care a creat trebuie să fie un număr întreg pozitiv',
@@ -24,14 +20,9 @@ export const documentCreateSchema = z.object({
       message: 'Notițele trebuie să aibă maximum 1000 de caractere',
     })
     .optional(),
-
   current_user_id: z.number().int().positive({
     message:
       'ID-ul utilizatorului care creează documentul trebuie să fie un număr întreg pozitiv',
-  }),
-
-  nr_revizie: z.number().int().min(0, {
-    message: 'Numărul de revizie trebuie să fie un număr întreg nenegativ',
   }),
 });
 

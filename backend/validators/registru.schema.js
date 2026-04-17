@@ -12,8 +12,8 @@ const createRegistruSchema = z.object({
     .int()
     .positive('ID-ul partenerului trebuie să fie un număr întreg pozitiv'),
   obiectul: z.string().min(1, 'Obiectul este obligatoriu'),
-  cod_ssi: z.string().min(1, 'Codul SSI este obligatoriu'),
-  cod_angajament: z.string().min(1, 'Codul de angajament este obligatoriu'),
+  cod_ssi: z.string().optional(),
+  cod_angajament: z.string().optional(),
   createdAt: z.coerce.date().default(() => new Date()),
   updatedAt: z.coerce.date().optional(),
   status: z.enum(['DRAFT', 'ACTIVE', 'CLOSED', 'CANCELED']).default('DRAFT'),

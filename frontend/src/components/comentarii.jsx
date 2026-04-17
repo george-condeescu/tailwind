@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axiosInstance';
 import { useAuth } from '../hooks/useAuth';
 import { Trash, PenLine, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function Comentarii() {
   const id = useParams().id;
@@ -11,7 +12,8 @@ export default function Comentarii() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const [editComentariu, setEditComentariu] = useState(null); // { id, text }
+  const [editComentariu, setEditComentariu] = useState(null);
+  const [newText, setNewText] = useState('');
 
   const { data: documentData } = useQuery({
     queryKey: ['document', id],
@@ -68,6 +70,11 @@ export default function Comentarii() {
     onSuccess: (created) => {
       queryClient.setQueryData(queryKey, (old) => (old ? [...old, created] : [created]));
       queryClient.invalidateQueries({ queryKey });
+      setNewText('');
+      toast.success('Comentariu adăugat!');
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.error || 'Eroare la adăugarea comentariului');
     },
   });
 
@@ -121,25 +128,25 @@ export default function Comentarii() {
         ))}
       <h5 className="text-lg font-bold mb-2">Adauga un comentariu:</h5>
       <textarea
-        id="comentariuText"
         className="w-full p-2 border rounded mb-2 bg-gray-100"
         rows="4"
         placeholder="Scrie un comentariu..."
-      ></textarea>
+        value={newText}
+        onChange={(e) => setNewText(e.target.value)}
+      />
       <button
-        className="bg-blue-500 text-white px-4 py-2 rounded"
+        className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+        disabled={!newText.trim() || mutation.isPending}
         onClick={() => {
-          const newComentariu = {
-            document_id: id,
-            text: document.getElementById('comentariuText').value,
-            persoana: user?.full_name || 'User', // Replace with actual user data
+          mutation.mutate({
+            document_id: parseInt(id),
+            text: newText,
+            persoana: user?.full_name || 'User',
             data_modif: new Date().toISOString(),
-          };
-          mutation.mutate(newComentariu);
-          document.getElementById('comentariuText').value = ''; // Clear textarea
+          });
         }}
       >
-        Adauga Comentariu
+        {mutation.isPending ? 'Se salvează...' : 'Adauga Comentariu'}
       </button>
 
       {/* Modal editare comentariu */}
