@@ -48,13 +48,28 @@ export default function Fisiere() {
 
   const handleDownload = async (fileId, originalName) => {
     try {
-      const response = await api.get(`/fisiere/download/${fileId}`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(response.data);
+      const response = await api.get(`/fisiere/download/${fileId}`, {
+        responseType: 'blob',
+        headers: { Accept: '*/*' },
+      });
+
+      const contentType = response.headers['content-type'] || '';
+      if (contentType.includes('text/html') || contentType.includes('application/json')) {
+        console.error('Server returned error instead of file, content-type:', contentType);
+        alert('Eroare la descărcarea fișierului.');
+        return;
+      }
+
+      const blob = new Blob([response.data], { type: contentType || 'application/octet-stream' });
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
+      a.style.display = 'none';
       a.href = url;
       a.download = originalName;
+      document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      setTimeout(() => window.URL.revokeObjectURL(url), 150);
     } catch (error) {
       console.error('Error downloading file:', error);
       alert('Eroare la descărcarea fișierului.');
