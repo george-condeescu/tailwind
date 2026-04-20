@@ -8,6 +8,26 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../api/axiosInstance';
 import { usePartner } from '../hooks/usePartner';
 
+//context
+import { useAuth } from '../hooks/useAuth';
+
+const editableFieldsByRole = {
+  operator: ['observatii', 'partener_id', 'obiectul'],
+  contabil: ['cod_ssi', 'cod_angajament'],
+  manager: [
+    'observatii',
+    'partener_id',
+    'obiectul',
+    'cod_ssi',
+    'cod_angajament',
+  ],
+};
+
+function canEditField(field, role) {
+  const editableFields = editableFieldsByRole[role] || [];
+  return editableFields.includes(field);
+}
+
 const editRegistruSchema = z.object({
   observatii: z.string().optional(),
   partener_id: z.coerce.number().min(1, 'Partenerul este obligatoriu'),
@@ -20,6 +40,7 @@ const editRegistruSchema = z.object({
 export default function EditRegistruModal({ nrInreg, show, handleClose }) {
   const [loading, setLoading] = useState(false);
   const { getAllPartners } = usePartner();
+  const { user } = useAuth();
 
   const { data: partners = [] } = useQuery({
     queryKey: ['partners', 'all'],
@@ -83,6 +104,7 @@ export default function EditRegistruModal({ nrInreg, show, handleClose }) {
               className="w-full px-3 py-2 border border-gray-300 rounded"
               rows={2}
               {...register('observatii')}
+              disabled={!canEditField('observatii', user.role)}
             />
           </div>
           <div>
@@ -90,6 +112,7 @@ export default function EditRegistruModal({ nrInreg, show, handleClose }) {
             <select
               className="w-full px-3 py-2 border border-gray-300 rounded"
               {...register('partener_id')}
+              disabled={!canEditField('partener_id', user.role)}
             >
               <option value="">-- selectează --</option>
               {partners.partners.map((p) => (
@@ -110,6 +133,7 @@ export default function EditRegistruModal({ nrInreg, show, handleClose }) {
               className="w-full px-3 py-2 border border-gray-300 rounded"
               rows={2}
               {...register('obiectul')}
+              disabled={!canEditField('obiectul', user.role)}
             />
             {errors.obiectul && (
               <p className="text-red-500 text-sm mt-1">
@@ -124,6 +148,7 @@ export default function EditRegistruModal({ nrInreg, show, handleClose }) {
                 type="text"
                 className="w-full px-3 py-2 border border-gray-300 rounded"
                 {...register('cod_ssi')}
+                disabled={!canEditField('cod_ssi', user.role)}
               />
               {errors.cod_ssi && (
                 <p className="text-red-500 text-sm mt-1">
@@ -139,6 +164,7 @@ export default function EditRegistruModal({ nrInreg, show, handleClose }) {
                 type="text"
                 className="w-full px-3 py-2 border border-gray-300 rounded"
                 {...register('cod_angajament')}
+                disabled={!canEditField('cod_angajament', user.role)}
               />
               {errors.cod_angajament && (
                 <p className="text-red-500 text-sm mt-1">

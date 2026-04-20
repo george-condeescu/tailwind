@@ -5,7 +5,6 @@ import {
   Users,
   Building2,
   Handshake,
-  Search,
   Printer,
 } from 'lucide-react';
 import api from '../api/axiosInstance';
@@ -47,6 +46,7 @@ const rapoarte = [
     culoare: 'border-purple-500',
     text: 'text-purple-600',
     icon: <Users size={28} />,
+    adminOnly: true,
   },
   {
     titlu: 'Lista Departamente',
@@ -56,14 +56,7 @@ const rapoarte = [
     culoare: 'border-red-500',
     text: 'text-red-600',
     icon: <Building2 size={28} />,
-  },
-  {
-    titlu: 'Căutare Generală',
-    descriere: 'Caută documente, registre sau parteneri după cuvinte cheie.',
-    link: '/search',
-    culoare: 'border-teal-500',
-    text: 'text-teal-600',
-    icon: <Search size={28} />,
+    adminOnly: true,
   },
 ];
 
@@ -259,7 +252,7 @@ const Raports = () => {
 
       <main className="w-full max-w-4xl">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {rapoarte.map((r) => (
+          {rapoarte.filter((r) => !r.adminOnly || user?.is_admin || user?.role === 'manager').map((r) => (
             <Link
               key={r.link}
               to={r.link}

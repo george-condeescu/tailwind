@@ -4,6 +4,23 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-hot-toast';
 
+const editableFieldsByRole = {
+  operator: ['observatii', 'partener_id', 'obiectul'],
+  contabil: ['cod_ssi', 'cod_angajament'],
+  manager: [
+    'observatii',
+    'partener_id',
+    'obiectul',
+    'cod_ssi',
+    'cod_angajament',
+  ],
+};
+
+function canEditField(field, role) {
+  const editableFields = editableFieldsByRole[role] || [];
+  return editableFields.includes(field);
+}
+
 export default function InformatiiDocument({ documentData }) {
   const { user } = useAuth();
   const userId = user?.id;
@@ -51,10 +68,14 @@ export default function InformatiiDocument({ documentData }) {
         cod_angajament: codAngajament,
       });
       toast.success('Salvat cu succes');
-      queryClient.invalidateQueries({ queryKey: ['document', String(documentData?.id)] });
+      queryClient.invalidateQueries({
+        queryKey: ['document', String(documentData?.id)],
+      });
       setEditing(false);
     } catch (err) {
-      toast.error('Eroare la salvare: ' + (err.response?.data?.error || err.message));
+      toast.error(
+        'Eroare la salvare: ' + (err.response?.data?.error || err.message),
+      );
     } finally {
       setSaving(false);
     }
@@ -99,6 +120,7 @@ export default function InformatiiDocument({ documentData }) {
                   value={codSsi}
                   onChange={(e) => setCodSsi(e.target.value)}
                   className="ml-2 border rounded px-2 py-0.5 text-sm w-48"
+                  disabled={!canEditField('cod_ssi', user.role)}
                 />
               </div>
               <div className="mb-2 border-b border-gray-200 pb-2">
@@ -108,6 +130,7 @@ export default function InformatiiDocument({ documentData }) {
                   value={codAngajament}
                   onChange={(e) => setCodAngajament(e.target.value)}
                   className="ml-2 border rounded px-2 py-0.5 text-sm w-48"
+                  disabled={!canEditField('cod_angajament', user.role)}
                 />
               </div>
               <div className="flex gap-2 mb-2">
@@ -130,16 +153,30 @@ export default function InformatiiDocument({ documentData }) {
             <>
               <p className="mb-2 border-b border-gray-200 pb-2">
                 <strong>Cod SSI:</strong>{' '}
-                {documentData?.registru?.cod_ssi || (isRecipient ? <span className="text-gray-400 italic">necompletat</span> : '—')}
+                {documentData?.registru?.cod_ssi ||
+                  (isRecipient ? (
+                    <span className="text-gray-400 italic">necompletat</span>
+                  ) : (
+                    '—'
+                  ))}
               </p>
               <p className="mb-2 border-b border-gray-200 pb-2">
                 <strong>Cod Angajament:</strong>{' '}
-                {documentData?.registru?.cod_angajament || (isRecipient ? <span className="text-gray-400 italic">necompletat</span> : '—')}
+                {documentData?.registru?.cod_angajament ||
+                  (isRecipient ? (
+                    <span className="text-gray-400 italic">necompletat</span>
+                  ) : (
+                    '—'
+                  ))}
               </p>
               {isRecipient && (
                 <button
                   onClick={handleEditStart}
-                  className="mb-2 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                  className="mb-2 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+                  disabled={
+                    !canEditField('cod_ssi', user.role) &&
+                    !canEditField('cod_angajament', user.role)
+                  }
                 >
                   Completează Cod SSI / Cod Angajament
                 </button>

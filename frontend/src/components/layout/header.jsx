@@ -48,7 +48,7 @@ export default function Header({ toggleMobileMenu, isMobileMenuOpen }) {
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <img src="./vite.svg" alt="Logo" className="h-5 w-5 rounded-full" />
+            <img src="/vite.svg" alt="Logo" className="h-5 w-5 rounded-full" />
             <h3 className="text-xl font-bold">Consiliul Județean Teleorman</h3>
           </div>
 
