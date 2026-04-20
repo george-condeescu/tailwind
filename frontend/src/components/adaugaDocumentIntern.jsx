@@ -16,6 +16,23 @@ import { documentCreateSchema } from '../validations/document.schema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 
+const editableFieldsByRole = {
+  operator: ['observatii', 'partener_id', 'obiectul'],
+  contabil: ['cod_ssi', 'cod_angajament'],
+  manager: [
+    'observatii',
+    'partener_id',
+    'obiectul',
+    'cod_ssi',
+    'cod_angajament',
+  ],
+};
+
+function canEditField(field, role) {
+  const editableFields = editableFieldsByRole[role] || [];
+  return editableFields.includes(field);
+}
+
 export default function AdaugaDocumentIntern() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -183,6 +200,7 @@ export default function AdaugaDocumentIntern() {
                   placeholder="Observatii"
                   className="w-full border rounded px-3 py-2"
                   {...register('observatii')}
+                  disabled={!canEditField('observatii', user.role)}
                 />
                 {errors.observatii && (
                   <p className="text-red-500 text-sm mt-1">
@@ -208,6 +226,7 @@ export default function AdaugaDocumentIntern() {
                         id="partener_id"
                         className="w-full border rounded px-3 py-2"
                         {...register('partener_id')}
+                        disabled={!canEditField('partener_id', user.role)}
                       >
                         <option value="" disabled>
                           -- selectează partenerul --
@@ -271,6 +290,7 @@ export default function AdaugaDocumentIntern() {
                   id="obiectul"
                   className="w-full border rounded px-3 py-2"
                   {...register('obiectul')}
+                  disabled={!canEditField('obiectul', user.role)}
                 />
                 {errors.obiectul && (
                   <p className="text-red-500 text-sm mt-1">
@@ -289,6 +309,7 @@ export default function AdaugaDocumentIntern() {
                     id="cod_ssi"
                     className="w-full border rounded px-3 py-2"
                     {...register('cod_ssi')}
+                    disabled={!canEditField('cod_ssi', user.role)}
                   />
                   {errors.cod_ssi && (
                     <p className="text-red-500 text-sm mt-1">
@@ -306,6 +327,7 @@ export default function AdaugaDocumentIntern() {
                     id="cod_angajament"
                     className="w-full border rounded px-3 py-2"
                     {...register('cod_angajament')}
+                    disabled={!canEditField('cod_angajament', user.role)}
                   />
                   {errors.cod_angajament && (
                     <p className="text-red-500 text-sm mt-1">

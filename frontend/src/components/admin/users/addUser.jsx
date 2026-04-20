@@ -15,6 +15,7 @@ const AddUserModal = ({ showAdd, handleCloseAdd, onSubmit }) => {
     start_date: '',
     end_date: '',
     org_unit_id: '',
+    role: 'operator',
   };
   const [formData, setFormData] = useState(initialForm);
 
@@ -104,6 +105,12 @@ const AddUserModal = ({ showAdd, handleCloseAdd, onSubmit }) => {
     }
   };
 
+  const handleChangeRole = (e) => {
+    const value = e.target.value;
+    console.log('Selected role:', value);
+    setFormData((prev) => ({ ...prev, role: value }));
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     const numericFields = ['is_active', 'is_admin', 'org_unit_id'];
@@ -132,6 +139,7 @@ const AddUserModal = ({ showAdd, handleCloseAdd, onSubmit }) => {
       throw new Error(
         'Data de sfârșit nu poate fi mai mică decât data de început.',
       );
+    console.log('Final form data before submission:', formData);
 
     try {
       setLoading(true);
@@ -187,7 +195,7 @@ const AddUserModal = ({ showAdd, handleCloseAdd, onSubmit }) => {
               type="text"
               name="full_name"
               placeholder="Full name "
-              value={formData.fullname}
+              value={formData.full_name}
               onChange={handleChange}
               required
               className="w-full mb-2 p-2 border rounded"
@@ -222,6 +230,23 @@ const AddUserModal = ({ showAdd, handleCloseAdd, onSubmit }) => {
               required
               className="w-full mb-2 p-2 border rounded"
             />
+
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChangeRole}
+              className="w-full mb-2 p-2 border rounded"
+            >
+              <option key="0" value="operator">
+                Operator
+              </option>
+              <option key="1" value="contabil">
+                Contabil
+              </option>
+              <option key="2" value="manager">
+                Manager
+              </option>
+            </select>
 
             <select
               name="is_active"

@@ -34,7 +34,7 @@ const Home = () => {
           <h3 className="text-4xl md:text-6xl font-bold mb-3 mt-1 tracking-tight">
             REGISTRATURĂ ALOP
           </h3>
-          <p className="text-xl md:text-2xl opacity-90 mb-8">
+          <p className="text-xl md:text-xl opacity-90 mb-8">
             Gestionarea eficientă a documentelor și fluxurilor de lucru.
           </p>
 

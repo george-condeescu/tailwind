@@ -63,7 +63,9 @@ const getUserById = async (req, res) => {
       entity_id: userId,
       summary: `Eroare la accesarea utilizatorului cu ID: ${userId}: ${error.message}`,
     }).catch((e) => console.error('Audit error:', e));
-    res.status(500).json({ message: 'Error fetching user', error: error.message });
+    res
+      .status(500)
+      .json({ message: 'Error fetching user', error: error.message });
   }
 };
 
@@ -94,7 +96,9 @@ const getAllUsers = async (req, res) => {
       entity_id: null,
       summary: `Eroare la listarea utilizatorilor: ${error.message}`,
     }).catch((e) => console.error('Audit error:', e));
-    res.status(500).json({ message: 'Error fetching users', error: error.message });
+    res
+      .status(500)
+      .json({ message: 'Error fetching users', error: error.message });
   }
 };
 
@@ -122,7 +126,8 @@ const register = async (req, res) => {
     return res.status(400).json({ errors });
   }
 
-  const { username, full_name, email, password, is_admin, is_active } = userData.data;
+  const { username, full_name, email, password, is_admin, is_active, role } =
+    userData.data;
   const { start_date, end_date, org_unit_id } = membershipData.data;
 
   //verific daca user-ul exista deja (username si email existente)
@@ -173,6 +178,7 @@ const register = async (req, res) => {
           password: hashedPassword,
           is_admin,
           is_active: is_active ?? 0,
+          role,
         },
         { transaction: t },
       );
@@ -312,6 +318,7 @@ const login = async (req, res) => {
       full_name: user.full_name,
       is_admin: user.is_admin,
       is_active: user.is_active,
+      role: user.role,
     },
   });
 };
@@ -342,7 +349,9 @@ const logout = async (req, res) => {
       entity_id: req.user ? req.user.id : null,
       summary: `Eroare la deconectarea utilizatorului: ${error.message}`,
     }).catch((e) => console.error('Audit error:', e));
-    res.status(500).json({ message: 'Error during logout', error: error.message });
+    res
+      .status(500)
+      .json({ message: 'Error during logout', error: error.message });
   }
 };
 
@@ -392,7 +401,9 @@ const getProfile = async (req, res) => {
       entity_id: userId,
       summary: `Eroare la accesarea profilului utilizatorului cu ID: ${userId}: ${error.message}`,
     }).catch((e) => console.error('Audit error:', e));
-    res.status(500).json({ message: 'Error fetching profile', error: error.message });
+    res
+      .status(500)
+      .json({ message: 'Error fetching profile', error: error.message });
   }
 };
 
@@ -421,7 +432,7 @@ const updateProfile = async (req, res) => {
     return res.status(400).json({ errors });
   }
 
-  const { username, full_name, email, is_admin, is_active } =
+  const { username, full_name, email, is_admin, is_active, role } =
     userData.data;
   const { start_date, end_date, org_unit_id } = membershipData.data;
 
@@ -463,6 +474,7 @@ const updateProfile = async (req, res) => {
       if (email) user.email = email;
       if (is_admin !== undefined) user.is_admin = Number(is_admin);
       if (is_active !== undefined) user.is_active = Number(is_active);
+      if (role) user.role = role;
 
       await user.save({ transaction: t });
 
@@ -571,7 +583,9 @@ const deleteUser = async (req, res) => {
       entity_id: userId,
       summary: `Eroare la ștergerea utilizatorului cu ID: ${userId}: ${error.message}`,
     }).catch((e) => console.error('Audit error:', e));
-    res.status(500).json({ message: 'Error deleting user', error: error.message });
+    res
+      .status(500)
+      .json({ message: 'Error deleting user', error: error.message });
   }
 };
 
@@ -666,7 +680,9 @@ const resetPassword = async (req, res) => {
         entity_id: null,
         summary: `Resetare parolă eșuată: token invalid sau expirat.`,
       });
-      return res.status(400).json({ message: 'Invalid or expired reset token' });
+      return res
+        .status(400)
+        .json({ message: 'Invalid or expired reset token' });
     }
 
     if (req.body.password !== req.body.confirmPassword) {
@@ -704,7 +720,9 @@ const resetPassword = async (req, res) => {
       entity_id: null,
       summary: `Eroare la resetarea parolei: ${error.message}`,
     }).catch((e) => console.error('Audit error:', e));
-    res.status(500).json({ message: 'Error resetting password', error: error.message });
+    res
+      .status(500)
+      .json({ message: 'Error resetting password', error: error.message });
   }
 };
 

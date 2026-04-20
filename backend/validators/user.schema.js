@@ -15,6 +15,10 @@ export const userCreateSchema = z.object({
   password: passwordSchema,
   is_admin: z.coerce.number().int().min(0).max(1).optional().default(0),
   is_active: z.coerce.number().int().min(0).max(1).optional().default(1),
+  role: z
+    .enum(['operator', 'contabil', 'manager'])
+    .optional()
+    .default('operator'),
 });
 
 export const userUpdateSchema = z.object({
@@ -24,4 +28,5 @@ export const userUpdateSchema = z.object({
   password: passwordSchema.optional(),
   is_admin: z.coerce.number().int().min(0).max(1).optional(),
   is_active: z.coerce.number().int().min(0).max(1).optional(),
+  role: z.enum(['operator', 'contabil', 'manager']).optional(),
 });

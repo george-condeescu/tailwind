@@ -127,7 +127,7 @@ const EditUser = ({ show, userId, onHide, onSaved }) => {
         )}
         {!loading && !error && user && (
           <form onSubmit={handleSubmit}>
-            <label>Username:</label>
+            <label style={{ fontWeight: 'bold' }}>Username:</label>
             <input
               className="w-full mb-2 p-2 border rounded"
               type="text"
@@ -136,7 +136,7 @@ const EditUser = ({ show, userId, onHide, onSaved }) => {
               onChange={handleInputChange}
             />
             <br />
-            <label>Fullname:</label>
+            <label style={{ fontWeight: 'bold' }}>Fullname:</label>
             <input
               className="w-full mb-2 p-2 border rounded"
               type="text"
@@ -145,7 +145,7 @@ const EditUser = ({ show, userId, onHide, onSaved }) => {
               onChange={handleInputChange}
             />
             <br />
-            <label>Email:</label>
+            <label style={{ fontWeight: 'bold' }}>Email:</label>
             <input
               className="w-full mb-2 p-2 border rounded"
               type="email"
@@ -154,7 +154,7 @@ const EditUser = ({ show, userId, onHide, onSaved }) => {
               onChange={handleInputChange}
             />
             <br />
-            <label>Este admin:</label>
+            <label style={{ fontWeight: 'bold' }}>Este admin:</label>
             <select
               className="w-full mb-2 p-2 border rounded"
               name="is_admin"
@@ -166,7 +166,7 @@ const EditUser = ({ show, userId, onHide, onSaved }) => {
               <option value={0}>User</option>
             </select>
             <br />
-            <label>Este activ:</label>
+            <label style={{ fontWeight: 'bold' }}>Este activ:</label>
             <select
               className="w-full mb-2 p-2 border rounded"
               name="is_active"
@@ -178,7 +178,19 @@ const EditUser = ({ show, userId, onHide, onSaved }) => {
               <option value={0}>Inactiv</option>
             </select>
             <br />
-            <label>Departament:</label>
+            <label style={{ fontWeight: 'bold' }}>Rol:</label>
+            <select
+              className="w-full mb-2 p-2 border rounded"
+              name="role"
+              value={user ? user.role : 'operator'}
+              onChange={handleInputChange}
+            >
+              <option value="operator">Operator</option>
+              <option value="contabil">Contabil</option>
+              <option value="manager">Manager</option>
+            </select>
+            <br />
+            <label style={{ fontWeight: 'bold' }}>Departament:</label>
             <div className="flex flex-row">
               <input
                 className="w-full mb-2 p-1 border rounded"
