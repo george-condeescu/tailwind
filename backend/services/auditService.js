@@ -33,7 +33,12 @@ const logAuditEvent = async (
     summary,
     before_data ? JSON.stringify(before_data) : null,
     after_data ? JSON.stringify(after_data) : null,
-    (req.ip || '127.0.0.1').replace(/^::ffff:/, ''),
+    (
+      (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
+      req.ip ||
+      req.socket?.remoteAddress ||
+      '127.0.0.1'
+    ).replace(/^::ffff:/, ''),
     req.get('User-Agent') || 'Unknown',
     // req.correlationId || null, // Generat de middleware-ul anterior
   ];
