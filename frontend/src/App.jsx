@@ -18,7 +18,7 @@ export default function ResponsiveLayout() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Router>
+      <Router basename="/tailwind">
         {/* Header */}
         <Header
           toggleMobileMenu={toggleMobileMenu}
