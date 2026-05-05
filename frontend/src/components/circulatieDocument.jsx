@@ -1,13 +1,11 @@
 import { useParams } from 'react-router-dom';
 import api from '../api/axiosInstance';
-import { useAuth } from '../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 
 import { Check, X } from 'lucide-react';
 
 export default function CirculatiaDocumentului() {
   const { id } = useParams();
-  const { user } = useAuth();
 
   //Queries
   const query = useQuery({

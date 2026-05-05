@@ -1,9 +1,6 @@
-import React, {useState} from 'react';
-
 const DepartmentRow = ({ department, level, isOpen, toggle }) => {
   const { name, type, parent_id, code, is_active, children } = department;
   const hasChildren = children && children.length > 0;
-  const [open, setOpen]=useState(false);
 
   return (
     <>

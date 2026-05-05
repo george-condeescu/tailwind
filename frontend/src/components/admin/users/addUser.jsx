@@ -143,7 +143,7 @@ const AddUserModal = ({ showAdd, handleCloseAdd, onSubmit }) => {
 
     try {
       setLoading(true);
-      const result = await api.post('/auth/register', formData);
+      const result = await api.post('/auth/admin/users', formData);
       console.log('User created successfully:', result.data);
       setSuccess(true);
       onSubmit(); // Notifică componenta părinte că un utilizator a fost adăugat

@@ -4,6 +4,7 @@ import sequelize from '../utils/database.js';
 import pool from '../utils/db.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'node:crypto';
 import sendEmail from '../utils/sendEmail.js';
 
 import {
@@ -102,8 +103,25 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+const getRecipientUsers = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: ['id', 'full_name'],
+      where: { is_active: 1 },
+      order: [['full_name', 'ASC']],
+    });
+    res.json({ users });
+  } catch (error) {
+    console.error('Error fetching recipient users:', error);
+    res
+      .status(500)
+      .json({ message: 'Error fetching recipients', error: error.message });
+  }
+};
+
 // Register a new user => POST /api/auth/register
 const register = async (req, res) => {
+  const isAdminRequest = req.originalUrl.startsWith('/api/auth/admin/');
   // console.log('body:',req.body);
   const userData = userCreateSchema.safeParse(req.body);
 
@@ -176,9 +194,9 @@ const register = async (req, res) => {
           full_name,
           email,
           password: hashedPassword,
-          is_admin,
-          is_active: is_active ?? 0,
-          role,
+          is_admin: isAdminRequest ? is_admin : 0,
+          is_active: isAdminRequest ? is_active : 0,
+          role: isAdminRequest ? role : 'operator',
         },
         { transaction: t },
       );
@@ -410,8 +428,17 @@ const getProfile = async (req, res) => {
 //update user profile (admin sau user) - put /api/auth/profile sau /api/auth/admin/users/profile/:id
 const updateProfile = async (req, res) => {
   const userId = req.params.id || req.user.userId;
-  // const { username, full_name, email, is_admin, is_active, org_unit_id } = req.body;
-  const userData = userUpdateSchema.partial().safeParse(req.body);
+  const isAdminRequest = req.originalUrl.startsWith('/api/auth/admin/');
+  const allowedProfileFields = ['username', 'full_name', 'email', 'password'];
+  const userPayload = isAdminRequest
+    ? req.body
+    : Object.fromEntries(
+        Object.entries(req.body).filter(([key]) =>
+          allowedProfileFields.includes(key),
+        ),
+      );
+
+  const userData = userUpdateSchema.partial().safeParse(userPayload);
   // console.log('userData', userData);
   if (!userData.success) {
     const errors = userData.error.issues.map((e) => ({
@@ -421,18 +448,20 @@ const updateProfile = async (req, res) => {
     return res.status(400).json({ errors });
   }
 
-  const membershipData = membershipCreateSchema.safeParse(req.body);
-  // console.log('membershipData', membershipData);
-  if (!membershipData.success) {
-    const errors = membershipData.error.issues.map((e) => ({
-      field: e.path[0],
-      message: e.message,
-    }));
+  let membershipData = { data: {} };
+  if (isAdminRequest) {
+    membershipData = membershipCreateSchema.partial().safeParse(req.body);
+    if (!membershipData.success) {
+      const errors = membershipData.error.issues.map((e) => ({
+        field: e.path[0],
+        message: e.message,
+      }));
 
-    return res.status(400).json({ errors });
+      return res.status(400).json({ errors });
+    }
   }
 
-  const { username, full_name, email, is_admin, is_active, role } =
+  const { username, full_name, email, password, is_admin, is_active, role } =
     userData.data;
   const { start_date, end_date, org_unit_id } = membershipData.data;
 
@@ -448,21 +477,22 @@ const updateProfile = async (req, res) => {
     return res.status(404).json({ message: 'User not found' });
   }
 
-  //verific daca org_unit_id exista in tabelul org_unit
-  const existDepart = await OrgUnit.findByPk(org_unit_id);
+  if (isAdminRequest && org_unit_id !== undefined) {
+    const existDepart = await OrgUnit.findByPk(org_unit_id);
 
-  if (!existDepart) {
-    await logAuditEvent(pool, {
-      req,
-      action: 'UPDATE_DENIED',
-      entity_type: 'USER',
-      entity_id: userId,
-      summary: `Actualizare profil refuzată: org_unit_id ${org_unit_id} nu există.`,
-    });
-    return res.status(400).json({
-      status: false,
-      message: 'Organization ID not exists.',
-    });
+    if (!existDepart) {
+      await logAuditEvent(pool, {
+        req,
+        action: 'UPDATE_DENIED',
+        entity_type: 'USER',
+        entity_id: userId,
+        summary: `Actualizare profil refuzată: org_unit_id ${org_unit_id} nu există.`,
+      });
+      return res.status(400).json({
+        status: false,
+        message: 'Organization ID not exists.',
+      });
+    }
   }
 
   const before = user.toJSON();
@@ -472,9 +502,12 @@ const updateProfile = async (req, res) => {
       if (username) user.username = username;
       if (full_name) user.full_name = full_name;
       if (email) user.email = email;
-      if (is_admin !== undefined) user.is_admin = Number(is_admin);
-      if (is_active !== undefined) user.is_active = Number(is_active);
-      if (role) user.role = role;
+      if (password) user.password = await bcrypt.hash(password, 10);
+      if (isAdminRequest && is_admin !== undefined)
+        user.is_admin = Number(is_admin);
+      if (isAdminRequest && is_active !== undefined)
+        user.is_active = Number(is_active);
+      if (isAdminRequest && role) user.role = role;
 
       await user.save({ transaction: t });
 
@@ -592,6 +625,9 @@ const deleteUser = async (req, res) => {
 //forgot password - send email with reset link - post /api/auth/forgot-password
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
+  const genericResponse = {
+    message: 'Dacă emailul există, vei primi instrucțiuni pentru resetarea parolei.',
+  };
   try {
     const user = await User.findOne({ where: { email } });
     if (!user) {
@@ -602,17 +638,11 @@ const forgotPassword = async (req, res) => {
         entity_id: null,
         summary: `Resetare parolă solicitată pentru email inexistent: ${email}.`,
       });
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(200).json(genericResponse);
     }
     // Aici ar trebui să adaugi logica pentru a trimite emailul cu linkul de resetare a parolei
     //reset token
-    const resetToken = bcrypt.hashSync(email, 10, function (err, hash) {
-      if (err) {
-        console.error('Error generating reset token:', err);
-        return null;
-      }
-      return hash;
-    });
+    const resetToken = crypto.randomBytes(32).toString('hex');
     //set reset token in database for user
     user.resetPasswordToken = resetToken;
     //set token expiration time to 30 minutes
@@ -638,9 +668,7 @@ const forgotPassword = async (req, res) => {
       summary: `Email de resetare parolă trimis utilizatorului cu ID: ${user.id} (${email}).`,
     });
 
-    res.status(200).json({
-      message: 'Email sent to: ' + email,
-    });
+    res.status(200).json(genericResponse);
   } catch (error) {
     console.error('Error sending reset email:', error);
     const user = await User.findOne({ where: { email } }).catch(() => null);
@@ -732,6 +760,7 @@ export {
   logout,
   getProfile,
   getAllUsers,
+  getRecipientUsers,
   getUserById,
   updateProfile,
   deleteUser,

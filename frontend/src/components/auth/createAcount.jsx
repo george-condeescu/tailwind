@@ -15,7 +15,7 @@ export default function CreateAccount({ isOpen: propIsOpen }) {
   const navigate = useNavigate();
 
   const [departments, setDepartments] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Modalul este deschis dacă primim prop-ul sau dacă suntem pe ruta /register
@@ -51,7 +51,6 @@ export default function CreateAccount({ isOpen: propIsOpen }) {
 
   useEffect(() => {
     const baseURL = import.meta.env.VITE_API_URL || '/api';
-    setLoading(true);
     api
       .get(`${baseURL}/departments/public`)
       .then((res) => setDepartments(res.data.data ?? res.data))

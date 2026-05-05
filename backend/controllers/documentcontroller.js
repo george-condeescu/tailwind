@@ -2,9 +2,105 @@ import sequelize from '../utils/database.js';
 import documentService from '../services/documentService.js';
 import circulatieService from '../services/circulatieService.js';
 import { myCache } from '../middleware/cacheMiddleware.js';
+import { Op } from 'sequelize';
+import { Circulatie, Document, User } from '../models/index.js';
+
+const isAdminUser = async (req) => {
+  const userId = req.user?.userId;
+  if (!userId) return false;
+  const user = await User.findByPk(userId, { attributes: ['is_admin'] });
+  return !!user?.is_admin;
+};
+
+const canAccessDocument = async (req, documentId) => {
+  const userId = req.user?.userId;
+  if (!userId) return false;
+  if (await isAdminUser(req)) return true;
+
+  const directMatch = await Document.count({
+    where: {
+      id: documentId,
+      [Op.or]: [{ created_by_user_id: userId }, { current_user_id: userId }],
+    },
+  });
+  if (directMatch > 0) return true;
+
+  const circulationMatch = await Circulatie.count({
+    where: {
+      document_id: documentId,
+      [Op.or]: [{ from_user_id: userId }, { to_user_id: userId }],
+    },
+  });
+  return circulationMatch > 0;
+};
+
+const canModifyDocument = async (req, documentId) => {
+  const userId = req.user?.userId;
+  if (!userId) return false;
+  if (await isAdminUser(req)) return true;
+
+  const directMatch = await Document.count({
+    where: {
+      id: documentId,
+      [Op.or]: [{ created_by_user_id: userId }, { current_user_id: userId }],
+    },
+  });
+  return directMatch > 0;
+};
+
+const canAccessNrInreg = async (req, nrInreg) => {
+  const userId = req.user?.userId;
+  if (!userId) return false;
+  if (await isAdminUser(req)) return true;
+
+  const directMatch = await Document.count({
+    where: {
+      nr_inreg: nrInreg,
+      [Op.or]: [{ created_by_user_id: userId }, { current_user_id: userId }],
+    },
+  });
+  if (directMatch > 0) return true;
+
+  const circulationMatch = await Circulatie.count({
+    include: [
+      {
+        model: Document,
+        as: 'document',
+        where: { nr_inreg: nrInreg },
+        attributes: [],
+      },
+    ],
+    where: {
+      [Op.or]: [{ from_user_id: userId }, { to_user_id: userId }],
+    },
+  });
+  return circulationMatch > 0;
+};
+
+const canAccessUserScope = async (req, userId) => {
+  return Number(userId) === req.user?.userId || isAdminUser(req);
+};
 
 // create a new Document => POST /api/documents
 const createDocument = async (req, res) => {
+  const createdByUserId = Number(req.body.created_by_user_id);
+  const currentUserId = Number(req.body.current_user_id);
+  const adminUser = await isAdminUser(req);
+  if (
+    createdByUserId &&
+    createdByUserId !== req.user?.userId &&
+    !adminUser
+  ) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  if (
+    currentUserId &&
+    currentUserId !== req.user?.userId &&
+    !adminUser
+  ) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
   try {
     const result = await sequelize.transaction(async (t) => {
       const newDocument = await documentService.createDocument(req.body, t);
@@ -27,11 +123,14 @@ const createDocument = async (req, res) => {
 // get document by id => GET /api/documents/:id
 const getDocumentById = async (req, res) => {
   const key = '__cache__' + req.originalUrl;
-  const cachedBody = myCache.get(key);
-  if (cachedBody) {
-    return res.status(200).json(cachedBody);
-  }
   try {
+    if (!(await canAccessDocument(req, req.params.id))) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    const cachedBody = myCache.get(key);
+    if (cachedBody) {
+      return res.status(200).json(cachedBody);
+    }
     const document = await documentService.findDocumentById(req.params.id);
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
@@ -46,6 +145,9 @@ const getDocumentById = async (req, res) => {
 
 // documentele create de un utilizator => GET /api/documents/user/:user_id
 const getDocumentsByUserId = async (req, res) => {
+  if (!(await canAccessUserScope(req, req.params.user_id))) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
   const key = '__cache__' + req.originalUrl;
   const cachedBody = myCache.get(key);
   if (cachedBody) {
@@ -69,6 +171,9 @@ const getDocumentsByUserId = async (req, res) => {
 
 //documentele care sunt in inbox-ul unui utilizator => GET /api/documents/:user_id/inbox
 const getDocumentsInInboxByUserId = async (req, res) => {
+  if (!(await canAccessUserScope(req, req.params.user_id))) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
   const key = '__cache__' + req.originalUrl;
   try {
     const documents = await documentService.findDocumentsInInboxByUserId(
@@ -88,6 +193,9 @@ const getDocumentsInInboxByUserId = async (req, res) => {
 // toate documentele care au trecut pe la un utilizator indiferent daca sunt in inbox sau outbox
 // => GET /api/documents/all/:user_id
 const getAllDocumentsByUserId = async (req, res) => {
+  if (!(await canAccessUserScope(req, req.params.user_id))) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
   const key = '__cache__' + req.originalUrl;
   const cachedBody = myCache.get(key);
   if (cachedBody) {
@@ -111,6 +219,9 @@ const getAllDocumentsByUserId = async (req, res) => {
 // numarul documentelor care sunt in inbox-ul unui utilizator
 // => GET /api/documents/inbox/count/:user_id
 const getDocumentsCountInInboxByUserId = async (req, res) => {
+  if (!(await canAccessUserScope(req, req.params.user_id))) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
   const key = '__cache__' + req.originalUrl;
 
   try {
@@ -128,11 +239,14 @@ const getDocumentsCountInInboxByUserId = async (req, res) => {
 // documentele (reviziile) unui registru => GET /api/documents/nr-inreg/:nr_inreg
 const getDocumentsByNrInreg = async (req, res) => {
   const key = '__cache__' + req.originalUrl;
-  const cachedBody = myCache.get(key);
-  if (cachedBody) {
-    return res.status(200).json(cachedBody);
-  }
   try {
+    if (!(await canAccessNrInreg(req, req.params.nr_inreg))) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    const cachedBody = myCache.get(key);
+    if (cachedBody) {
+      return res.status(200).json(cachedBody);
+    }
     const documents = await documentService.findDocumentsByNrInreg(
       req.params.nr_inreg,
     );
@@ -150,6 +264,24 @@ const updateDocument = async (req, res) => {
 
   // console.log(`Received request to update Document with ID ${req.params.id}`);
   try {
+    if (!(await canModifyDocument(req, req.params.id))) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    if (!(await isAdminUser(req))) {
+      const existingDocument = await Document.findByPk(req.params.id, {
+        attributes: ['created_by_user_id', 'current_user_id'],
+      });
+      if (!existingDocument) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+      if (
+        Number(req.body.created_by_user_id) !==
+          existingDocument.created_by_user_id ||
+        Number(req.body.current_user_id) !== existingDocument.current_user_id
+      ) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+    }
     const result = await sequelize.transaction(async (t) => {
       const updatedDocument = await documentService.updateDocument(
         req.params.id,
@@ -172,6 +304,9 @@ const updateDocument = async (req, res) => {
 const deleteDocument = async (req, res) => {
   const key = '__cache__' + req.originalUrl;
   try {
+    if (!(await canModifyDocument(req, req.params.id))) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
     await sequelize.transaction(async (t) => {
       await documentService.deleteDocument(req.params.id, t);
       const invalidatedKeys = myCache

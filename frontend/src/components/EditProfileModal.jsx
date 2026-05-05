@@ -1,20 +1,13 @@
-import React, { useState, useEffect, lazy } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from 'react-bootstrap';
 import { toast } from 'react-hot-toast';
 import api from '../api/axiosInstance';
-
-const DepartmentList = lazy(() =>
-  import('./admin/users/deparmentsList'),
-);
 
 const EditProfileModal = ({ show, onHide, onSaved }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-
-  const [showDepartments, setShowDepartments] = useState(false);
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState(null);
 
   useEffect(() => {
     if (!show) return;
@@ -43,41 +36,9 @@ const EditProfileModal = ({ show, onHide, onSaved }) => {
     return () => { cancelled = true; };
   }, [show]);
 
-  useEffect(() => {
-    if (!selectedDepartmentId) return;
-
-    let cancelled = false;
-
-    const fetchDepartment = async () => {
-      try {
-        const response = await api.get(
-          `/departments/${selectedDepartmentId}`,
-        );
-        const department = response.data.data ?? response.data;
-        if (!cancelled) {
-          setProfile((prev) => ({
-            ...prev,
-            department: department.name,
-            org_unit_id: department.id,
-          }));
-        }
-      } catch (err) {
-        console.error('Eroare la încărcarea departamentului:', err);
-      }
-    };
-
-    fetchDepartment();
-    return () => { cancelled = true; };
-  }, [selectedDepartmentId]);
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setProfile((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleChangeDepartment = (id) => {
-    setSelectedDepartmentId(id);
-    setShowDepartments(false);
   };
 
   const handleSubmit = async (e) => {
@@ -88,7 +49,6 @@ const EditProfileModal = ({ show, onHide, onSaved }) => {
         full_name: profile.full_name,
         username: profile.username,
         email: profile.email,
-        org_unit_id: profile.org_unit_id,
       });
       toast.success('Profil actualizat cu succes!');
       if (onSaved) onSaved(response.data);
@@ -104,7 +64,6 @@ const EditProfileModal = ({ show, onHide, onSaved }) => {
 
   const handleClose = () => {
     setProfile(null);
-    setSelectedDepartmentId(null);
     setError(null);
     onHide();
   };
@@ -176,13 +135,6 @@ const EditProfileModal = ({ show, onHide, onSaved }) => {
                     readOnly
                     disabled
                   />
-                  <button
-                    type="button"
-                    className="btn btn-success text-nowrap"
-                    onClick={() => setShowDepartments(true)}
-                  >
-                    Schimbă
-                  </button>
                 </div>
               </div>
 
@@ -207,11 +159,6 @@ const EditProfileModal = ({ show, onHide, onSaved }) => {
         </Modal.Body>
       </Modal>
 
-      <DepartmentList
-        show={showDepartments}
-        onHide={() => setShowDepartments(false)}
-        handleChangeDepartment={handleChangeDepartment}
-      />
     </>
   );
 };

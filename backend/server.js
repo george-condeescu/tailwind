@@ -98,7 +98,7 @@ app.use('/api/circulatie', authenticateToken, circulatieRoutes);
 app.use('/api/documents', authenticateToken, documentRoutes);
 app.use('/api/comentarii', authenticateToken, comentariuRoutes);
 app.use('/api/fisiere', authenticateToken, fisierRoutes);
-app.use('/api/tickets', TicketRouter);
+app.use('/api/tickets', authenticateToken, TicketRouter);
 app.use('/api/admin/audit-events', authenticateToken, requireAdmin, auditRouter);
 app.use('/api/contact', contactRouter);
 
@@ -108,7 +108,7 @@ app.use('/api/uploads', express.static('uploads'));
 app.use('/pdfuri', express.static(path.join(__dirname, 'uploads')));
 
 // Ruta pentru golirea cache-ului
-app.post('/api/admin/flush-cache', (req, res) => {
+app.post('/api/admin/flush-cache', authenticateToken, requireAdmin, (req, res) => {
   try {
     myCache.flushAll();
     res.status(200).json({ message: 'Cache-ul a fost golit cu succes!' });

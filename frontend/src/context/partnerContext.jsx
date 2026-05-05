@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext } from 'react';
 import api from '../api/axiosInstance';
 
 import {
@@ -79,7 +79,7 @@ export const PartnerProvider = ({ children }) => {
   const getPartners = async (page = 1) => {
     dispatch({ type: FETCH_PARTNERS_START });
     try {
-      const response = await api.get(`/partners/?page=${page}`);
+      const response = await api.get('/partners/', { params: { page } });
       const data = response.data;
       dispatch({ type: FETCH_PARTNERS_SUCCESS, payload: data });
       return data;
@@ -92,7 +92,7 @@ export const PartnerProvider = ({ children }) => {
   // 1b. Fetch all partners (no pagination) - for search/select
   const getAllPartners = async () => {
     try {
-      const response = await api.get('/partners/?all=true');
+      const response = await api.get('/partners/', { params: { all: true } });
       // console.log('Toți partenerii:', response.data);
       return response.data;
     } catch (error) {
@@ -105,7 +105,7 @@ export const PartnerProvider = ({ children }) => {
   const getPartner = async (id) => {
     dispatch({ type: FETCH_PARTNER_START });
     try {
-      const response = await api.get(`/api/partners/${id}/`);
+      const response = await api.get(`/partners/${encodeURIComponent(id)}/`);
       const data = response.data;
       console.log('Partener selectat:', data);
       dispatch({ type: FETCH_PARTNER_SUCCESS, payload: data });

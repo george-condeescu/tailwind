@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { TicketCheck, RefreshCw, X, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../api/axiosInstance';
@@ -27,6 +27,9 @@ const prioritateLabels = {
   medie: 'Medie',
   ridicata: 'Ridicată',
 };
+
+const ticketUploadUrl = (filename) =>
+  `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/uploads/tickets/${encodeURIComponent(filename)}`;
 
 function parseFisiere(fisiere) {
   if (Array.isArray(fisiere)) return fisiere;
@@ -108,14 +111,14 @@ function TicketCard({ ticket }) {
                 {fisiere.map((f, i) => (
                   <a
                     key={i}
-                    href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/uploads/tickets/${f.filename}`}
+                    href={ticketUploadUrl(f.filename)}
                     target="_blank"
                     rel="noreferrer"
                     className="block rounded-lg overflow-hidden border border-gray-200 hover:opacity-80 transition-opacity"
                     title={f.originalname}
                   >
                     <img
-                      src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/uploads/tickets/${f.filename}`}
+                      src={ticketUploadUrl(f.filename)}
                       alt={f.originalname}
                       className="w-full h-20 object-cover"
                     />
@@ -151,7 +154,7 @@ export default function TicketsMele() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchTickets = async () => {
+  const fetchTickets = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
     setError('');
@@ -163,11 +166,11 @@ export default function TicketsMele() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     fetchTickets();
-  }, [user?.id]);
+  }, [fetchTickets]);
 
   const counts = {
     total: tickets.length,

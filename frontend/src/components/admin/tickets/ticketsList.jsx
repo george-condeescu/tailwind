@@ -21,6 +21,9 @@ const statusColors = {
 
 const STATUS_OPTIONS = ['nou', 'in_lucru', 'rezolvat'];
 
+const ticketUploadUrl = (filename) =>
+  `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/uploads/tickets/${encodeURIComponent(filename)}`;
+
 /* ─── View modal ─────────────────────────────────────────────────────────── */
 function parseFisiere(fisiere) {
   if (Array.isArray(fisiere)) return fisiere;
@@ -136,14 +139,14 @@ function ViewTicketModal({ ticket, onClose }) {
                 {fisiere.map((f, i) => (
                   <a
                     key={i}
-                    href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/uploads/tickets/${f.filename}`}
+                    href={ticketUploadUrl(f.filename)}
                     target="_blank"
                     rel="noreferrer"
                     className="block rounded-lg overflow-hidden border border-gray-200 hover:opacity-80 transition-opacity"
                     title={f.originalname}
                   >
                     <img
-                      src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/uploads/tickets/${f.filename}`}
+                      src={ticketUploadUrl(f.filename)}
                       alt={f.originalname}
                       className="w-full h-20 object-cover"
                     />

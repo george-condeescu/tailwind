@@ -18,7 +18,9 @@ export default function Revizii({ documentData }) {
   const query = useQuery({
     queryKey: ['revizii', nr_inreg],
     queryFn: async () => {
-      const response = await api.get(`/documents/nr-inreg/${nr_inreg}`);
+      const response = await api.get(
+        `/documents/nr-inreg/${encodeURIComponent(nr_inreg)}`,
+      );
       return response.data;
     },
     enabled: !!nr_inreg,
@@ -106,7 +108,7 @@ export default function Revizii({ documentData }) {
               {rev.fisiere.map((f) => (
                 <a
                   key={f.id}
-                  href={`/pdfuri/${f.file_name}`}
+                  href={`/pdfuri/${encodeURIComponent(f.file_name)}`}
                   download={f.original_name}
                   className="flex items-center gap-2 text-sm text-blue-600 hover:underline mb-1"
                 >

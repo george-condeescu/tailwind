@@ -34,7 +34,6 @@ export default function ResetPassword() {
       toast.error(msg);
     } finally {
       setLoading(false);
-      navigate('/login');
     }
   };
 

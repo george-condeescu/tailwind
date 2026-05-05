@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Send, CheckCircle, AlertCircle, X, ImageIcon } from 'lucide-react';
+import { Send, CheckCircle, X, ImageIcon } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../api/axiosInstance';
 import toast from 'react-hot-toast';
@@ -65,7 +65,6 @@ export default function CreateTicket() {
       formData.append('subiect', form.subiect);
       formData.append('mesaj', form.mesaj);
       formData.append('prioritate', form.prioritate);
-      if (user?.id != null) formData.append('user_id', user.id);
       fisiere.forEach(({ file }) => formData.append('fisiere', file));
 
       await api.post('/tickets', formData, {
@@ -110,17 +109,6 @@ export default function CreateTicket() {
           curând.
         </p>
       </div>
-
-      {/* Info banner dacă nu e autentificat */}
-      {!user && (
-        <div className="max-w-2xl mx-auto mb-6 flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-yellow-700 text-sm">
-          <AlertCircle size={18} className="mt-0.5 shrink-0" />
-          <span>
-            Nu ești autentificat. Tichetul va fi trimis anonim. Autentifică-te
-            pentru a putea urmări statusul tichetului.
-          </span>
-        </div>
-      )}
 
       {/* Form card */}
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-md border border-gray-100 p-8">

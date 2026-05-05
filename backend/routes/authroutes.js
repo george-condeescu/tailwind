@@ -1,6 +1,6 @@
 import express from 'express';
 import { cacheMiddleware } from '../middleware/cacheMiddleware.js';
-import { authenticateToken } from '../middleware/authmiddleware.js';
+import { authenticateToken, requireAdmin } from '../middleware/authmiddleware.js';
 
 import {
   register,
@@ -8,6 +8,7 @@ import {
   logout,
   getProfile,
   getAllUsers,
+  getRecipientUsers,
   getUserById,
   updateProfile,
   deleteUser,
@@ -21,7 +22,9 @@ authRouter.post('/register', register);
 authRouter.post('/login', login);
 authRouter.post('/logout', logout);
 authRouter.get('/profile', authenticateToken, getProfile);
-authRouter.get('/users', authenticateToken, cacheMiddleware(300), getAllUsers);
+authRouter.get('/users', authenticateToken, requireAdmin, cacheMiddleware(300), getAllUsers);
+authRouter.get('/recipients', authenticateToken, cacheMiddleware(300), getRecipientUsers);
+authRouter.post('/admin/users', register);
 authRouter.get('/admin/users/:id', cacheMiddleware(300), getUserById); //ok
 authRouter.get('/admin/users', cacheMiddleware(300), getAllUsers); //ok
 authRouter.put('/admin/users/:id', updateProfile); //ok

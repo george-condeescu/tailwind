@@ -4,6 +4,8 @@ import sequelize from '../utils/database.js';
 import fisierService from '../services/fisierService.js';
 import { myCache } from '../middleware/cacheMiddleware.js';
 import logAuditEvent from '../services/auditService.js';
+import { Op } from 'sequelize';
+import { Circulatie, Document, User } from '../models/index.js';
 
 // Helper: audit în afara unei tranzacții
 const auditWithNewConn = async (req, data) => {
@@ -15,11 +17,45 @@ const auditWithNewConn = async (req, data) => {
   }
 };
 
+const isAdminUser = async (req) => {
+  const userId = req.user?.userId;
+  if (!userId) return false;
+  const user = await User.findByPk(userId, { attributes: ['is_admin'] });
+  return !!user?.is_admin;
+};
+
+const canAccessDocument = async (req, documentId) => {
+  const userId = req.user?.userId;
+  if (!userId) return false;
+  if (await isAdminUser(req)) return true;
+
+  const directMatch = await Document.count({
+    where: {
+      id: documentId,
+      [Op.or]: [{ created_by_user_id: userId }, { current_user_id: userId }],
+    },
+  });
+  if (directMatch > 0) return true;
+
+  const circulationMatch = await Circulatie.count({
+    where: {
+      document_id: documentId,
+      [Op.or]: [{ from_user_id: userId }, { to_user_id: userId }],
+    },
+  });
+  return circulationMatch > 0;
+};
+
 const uploadFisier = async (req, res) => {
-  const { document_id, uploaded_by_user_id } = req.body;
+  const { document_id } = req.body;
+  const uploaded_by_user_id = req.user.userId;
 
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
+  }
+  if (!(await canAccessDocument(req, document_id))) {
+    await fs.promises.unlink(req.file.path).catch(() => {});
+    return res.status(403).json({ error: 'Access denied' });
   }
   try {
     const result = await fisierService.processFileUpload(
@@ -54,8 +90,18 @@ const uploadMultipleFiles = async (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ message: 'No files uploaded' });
   }
+  if (!(await canAccessDocument(req, req.body.document_id))) {
+    await Promise.all(
+      req.files.map((file) => fs.promises.unlink(file.path).catch(() => {})),
+    );
+    return res.status(403).json({ error: 'Access denied' });
+  }
 
   try {
+    req.files.forEach((file) => {
+      file.document_id = req.body.document_id;
+      file.uploaded_by_user_id = req.user.userId;
+    });
     // Trimitem array-ul de fișiere către service
     const results = await fisierService.processMultipleUploads(req.files);
     await auditWithNewConn(req, {
@@ -108,6 +154,9 @@ const getFisiereByDocumentId = async (req, res) => {
   const key = '__cache__' + req.originalUrl;
   console.log('Cache key for this get request:', key);
   try {
+    if (!(await canAccessDocument(req, req.params.documentId))) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
     const fisiere = await fisierService.findFisiereByDocumentId(
       req.params.documentId,
     );
@@ -138,6 +187,15 @@ const deleteFisierById = async (req, res) => {
 
   try {
     const before = await fisierService.findFisierById(id);
+    if (!before) {
+      return res.status(404).json({ error: 'Fisier not found' });
+    }
+    if (
+      before.uploaded_by_user_id !== req.user?.userId &&
+      !(await isAdminUser(req))
+    ) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
     const result = await sequelize.transaction(async (t) => {
       const deleted = await fisierService.deleteFisierById(id, t);
       await logAuditEvent(t.connection, {
@@ -181,6 +239,9 @@ const downloadFisier = async (req, res) => {
         summary: `Fișierul cu ID: ${id} nu a fost găsit la descărcare.`,
       }).catch((e) => console.error('Audit error:', e));
       return res.status(404).json({ error: 'Fisier negăsit' });
+    }
+    if (!(await canAccessDocument(req, fisier.document_id))) {
+      return res.status(403).json({ error: 'Access denied' });
     }
     const absolutePath = path.resolve(fisier.file_path);
     if (!fs.existsSync(absolutePath)) {

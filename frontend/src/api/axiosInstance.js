@@ -53,6 +53,7 @@ api.interceptors.response.use(
       // Curățăm datele sesiunii expirate
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('department');
 
       // Redirecționăm către login cu parametrul de motiv
       // Folosim window.location pentru a forța resetarea stării React

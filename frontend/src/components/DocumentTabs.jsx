@@ -1,11 +1,12 @@
-import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { NavLink, useParams } from 'react-router-dom';
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { NavLink, useLocation, useParams } from 'react-router-dom';
 import { Info, LayoutDashboard, Users, Receipt } from 'lucide-react';
 
 const iconMap = { Info, LayoutDashboard, Users, Receipt };
 
 export default function DocumentTabs() {
   const { id } = useParams();
+  const location = useLocation();
 
   const tabs = useMemo(
     () => [
@@ -40,9 +41,7 @@ export default function DocumentTabs() {
   // highlight position state
   const containerRef = useRef(null);
   const [pill, setPill] = useState({ left: 0, width: 0 });
-
-  // Recalculează highlight-ul când se schimbă ruta (tab-ul activ)
-  useLayoutEffect(() => {
+  const updatePill = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
 
@@ -52,24 +51,18 @@ export default function DocumentTabs() {
     const cRect = el.getBoundingClientRect();
     const aRect = active.getBoundingClientRect();
     setPill({ left: aRect.left - cRect.left, width: aRect.width });
-  });
+  }, []);
+
+  // Recalculează highlight-ul când se schimbă ruta (tab-ul activ)
+  useLayoutEffect(() => {
+    updatePill();
+  }, [location.pathname, updatePill]);
 
   // Recalculează la resize
   useLayoutEffect(() => {
-    const onResize = () => {
-      const el = containerRef.current;
-      if (!el) return;
-      const active = el.querySelector('[data-active="true"]');
-      if (!active) return;
-
-      const cRect = el.getBoundingClientRect();
-      const aRect = active.getBoundingClientRect();
-      setPill({ left: aRect.left - cRect.left, width: aRect.width });
-    };
-
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
+    window.addEventListener('resize', updatePill);
+    return () => window.removeEventListener('resize', updatePill);
+  }, [updatePill]);
 
   return (
     <div className="w-full">

@@ -1,4 +1,11 @@
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import {
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+  useParams,
+  useLocation,
+} from 'react-router-dom';
 import DocumentTabs from './DocumentTabs';
 
 function DocumentLayout() {

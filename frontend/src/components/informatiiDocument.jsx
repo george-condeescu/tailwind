@@ -63,7 +63,7 @@ export default function InformatiiDocument({ documentData }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put(`/registru/${documentData?.registru?.nr_inreg}`, {
+      await api.put(`/registru/${encodeURIComponent(documentData?.registru?.nr_inreg)}`, {
         cod_ssi: codSsi,
         cod_angajament: codAngajament,
       });

@@ -93,21 +93,31 @@ function flattenDepts(nodes, result = []) {
   return result;
 }
 
+function escapeHtml(value) {
+  return String(value ?? '-')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 function buildPrintHtml(titlu, headings, rows) {
   const now = new Date().toLocaleDateString('ro-RO', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   });
-  const thead = headings.map((h) => `<th>${h}</th>`).join('');
+  const safeTitle = escapeHtml(titlu);
+  const thead = headings.map((h) => `<th>${escapeHtml(h)}</th>`).join('');
   const tbody = rows
     .map(
       (cells) =>
-        `<tr>${cells.map((c) => `<td>${c ?? '-'}</td>`).join('')}</tr>`,
+        `<tr>${cells.map((c) => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`,
     )
     .join('');
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${titlu}</title><style>${printStyles}</style></head><body>
-    <h2>${titlu}</h2><p class="subtitle">Generat la: ${now} &nbsp;|&nbsp; ${rows.length} înregistrări</p>
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${safeTitle}</title><style>${printStyles}</style></head><body>
+    <h2>${safeTitle}</h2><p class="subtitle">Generat la: ${escapeHtml(now)} &nbsp;|&nbsp; ${rows.length} înregistrări</p>
     <table><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table>
     <script>window.onload=()=>{window.print();}</script></body></html>`;
 }
@@ -226,6 +236,7 @@ const Raports = () => {
 
       if (!html) return;
       const win = window.open('', '_blank');
+      win.opener = null;
       win.document.open();
       win.document.write(html);
       win.document.close();

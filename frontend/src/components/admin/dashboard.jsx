@@ -89,9 +89,9 @@ export default function Dashboard() {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await api.get(
-        `/admin/audit-events?limit=${PAGE_SIZE}&page=${p}`,
-      );
+      const { data } = await api.get('/admin/audit-events', {
+        params: { limit: PAGE_SIZE, page: p },
+      });
       setEvents(data.events ?? []);
       setTotal(data.total ?? 0);
     } catch (err) {

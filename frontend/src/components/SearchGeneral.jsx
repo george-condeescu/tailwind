@@ -356,7 +356,7 @@ export default function SearchGeneral() {
                     >
                       <td className="p-2 border-r border-amber-100 font-mono font-semibold text-blue-700 whitespace-nowrap">
                         {latestDoc ? (
-                          <a href={`/documents/${latestDoc.id}`}>
+                          <a href={`/documents/${encodeURIComponent(latestDoc.id)}`}>
                             {reg.nr_inreg}
                           </a>
                         ) : (

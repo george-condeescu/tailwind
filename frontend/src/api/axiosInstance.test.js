@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import api from './axiosInstance';
 
 describe('axiosInstance Interceptors', () => {
@@ -19,7 +19,7 @@ describe('axiosInstance Interceptors', () => {
       // Obținem funcția de eroare din interceptorul de răspuns
       const errorHandler = api.interceptors.response.handlers[0].rejected;
       await errorHandler(mockError);
-    } catch (e) {
+    } catch {
       // Eroarea este re-aruncată de interceptor, e normal
     }
 

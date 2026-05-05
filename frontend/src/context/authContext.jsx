@@ -128,13 +128,14 @@ export const AuthProvider = ({ children }) => {
 
   // --- AICI DEFINIM LOGOUT ---
   const logout = useCallback(async () => {
+    await api.post('/auth/logout').catch(() => {});
+
     // 1. Acțiune fizică: curățăm browserul
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('department');
 
     // 2. Acțiune logică: anunțăm Reducer-ul să reseteze state-ul
-    await api.post('/auth/logout'); // Notificăm backend-ul (opțional, dar recomandat pentru audit și invalidare token)
     dispatch({ type: LOGOUT });
 
     console.log('Utilizatorul a fost deconectat cu succes.');

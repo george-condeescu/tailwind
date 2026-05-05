@@ -64,7 +64,7 @@ export default function ListaRegistre() {
     e.stopPropagation();
     if (!window.confirm(`Ștergi registrul "${nrInreg}"?`)) return;
     try {
-      await api.delete(`/registru/${nrInreg}`);
+      await api.delete(`/registru/${encodeURIComponent(nrInreg)}`);
       toast.success('Registru șters cu succes');
       queryClient.invalidateQueries({ queryKey: ['registre', user?.id] });
       if (page > 1 && registre.length === 1) setPage(page - 1);

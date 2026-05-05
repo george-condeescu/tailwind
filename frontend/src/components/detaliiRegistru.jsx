@@ -25,7 +25,7 @@ export default function DetaliiRegistruModal({ nrInreg, show, handleClose }) {
   const { data: registru, isLoading: loadingReg } = useQuery({
     queryKey: ['registru', nrInreg],
     queryFn: async () => {
-      const res = await api.get(`/registru/${nrInreg}`);
+      const res = await api.get(`/registru/${encodeURIComponent(nrInreg)}`);
       return res.data;
     },
     enabled: !!nrInreg,
@@ -34,7 +34,7 @@ export default function DetaliiRegistruModal({ nrInreg, show, handleClose }) {
   const { data: revizii = [], isLoading: loadingRevizii } = useQuery({
     queryKey: ['revizii', nrInreg],
     queryFn: async () => {
-      const res = await api.get(`/documents/nr-inreg/${nrInreg}`);
+      const res = await api.get(`/documents/nr-inreg/${encodeURIComponent(nrInreg)}`);
       return res.data;
     },
     enabled: !!nrInreg,

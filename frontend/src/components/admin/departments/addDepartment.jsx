@@ -19,7 +19,7 @@ const initialForm = {
   is_active: 0,
 };
 
-export default function AddDepartmentModal({ id, show, handleClose }) {
+export default function AddDepartmentModal({ show, handleClose }) {
   const { data: allDepartments = [] } = useQuery({
     queryKey: ['departments'],
     queryFn: async () => {

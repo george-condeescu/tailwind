@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { cacheMiddleware } from '../middleware/cacheMiddleware.js';
 import ticketController from '../controllers/ticketcontrollers.js';
+import { requireAdmin } from '../middleware/authmiddleware.js';
 
 const { createTicket, updateTicket, deleteTicket, findAllTicket, findTicketById, findTicketsByUser, sendMesaj } = ticketController;
 
@@ -30,11 +31,11 @@ const upload = multer({
 const TicketRouter = express.Router();
 
 TicketRouter.post('/', upload.array('fisiere', 5), createTicket);
-TicketRouter.put('/:id/mesaj', sendMesaj);
-TicketRouter.put('/:id', updateTicket);
-TicketRouter.delete('/:id', deleteTicket);
-TicketRouter.get('/:id', cacheMiddleware(300), findTicketById);
+TicketRouter.put('/:id/mesaj', requireAdmin, sendMesaj);
+TicketRouter.put('/:id', requireAdmin, updateTicket);
+TicketRouter.delete('/:id', requireAdmin, deleteTicket);
+TicketRouter.get('/:id', findTicketById);
 TicketRouter.get('/user/:userId', findTicketsByUser);
-TicketRouter.get('/', cacheMiddleware(300), findAllTicket);
+TicketRouter.get('/', requireAdmin, cacheMiddleware(300), findAllTicket);
 
 export default TicketRouter;

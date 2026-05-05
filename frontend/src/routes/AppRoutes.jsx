@@ -49,9 +49,16 @@ const AppRoutes = () => {
       <Route path="/contact" element={<Contact />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/support" element={<CreateTicket />} />
 
       {/* Rute Protejate - Înfășurate în ProtectedRoute */}
+      <Route
+        path="/support"
+        element={
+          <ProtectedRoute>
+            <CreateTicket />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/tickets"
         element={
@@ -107,7 +114,7 @@ const AppRoutes = () => {
       <Route
         path="/admin/dashboard"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireAdmin>
             <Dashboard />
           </ProtectedRoute>
         }
@@ -116,7 +123,7 @@ const AppRoutes = () => {
       <Route
         path="/admin/users"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireAdmin>
             <ListUsers />
           </ProtectedRoute>
         }
@@ -124,7 +131,7 @@ const AppRoutes = () => {
       <Route
         path="/admin/departments"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireAdmin>
             <ListaDepartment />
           </ProtectedRoute>
         }
@@ -148,7 +155,7 @@ const AppRoutes = () => {
       <Route
         path="/admin/partners"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireAdmin>
             <ListPartner />
           </ProtectedRoute>
         }
@@ -157,7 +164,7 @@ const AppRoutes = () => {
       <Route
         path="/admin/registers"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireAdmin>
             <AdminListaRegistre />
           </ProtectedRoute>
         }
@@ -166,7 +173,7 @@ const AppRoutes = () => {
       <Route
         path="/admin/tickets"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireAdmin>
             <TicketsList />
           </ProtectedRoute>
         }
@@ -175,7 +182,7 @@ const AppRoutes = () => {
       <Route
         path="/admin/flush-cache"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireAdmin>
             <FlushCache />
           </ProtectedRoute>
         }

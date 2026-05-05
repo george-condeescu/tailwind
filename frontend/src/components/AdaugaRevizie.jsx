@@ -1,4 +1,4 @@
-import { useState, useRef, use } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast, Toaster } from 'react-hot-toast';
 import { Plus, FileText, RefreshCw, X, Paperclip } from 'lucide-react';
@@ -19,8 +19,6 @@ export default function AdaugaRevizie() {
 
   const nrInregFromUrl = searchParams.get('nr_inreg') ?? '';
   const [selectedNrInreg, setSelectedNrInreg] = useState(nrInregFromUrl);
-  const [revizieNr, setRevizieNr] = useState('');
-  const [note, setNote] = useState('');
   const [files, setFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef(null);
@@ -38,7 +36,7 @@ export default function AdaugaRevizie() {
   const { data: registruDetails, isLoading: registruLoading } = useQuery({
     queryKey: ['register', selectedNrInreg],
     queryFn: async () => {
-      const res = await api.get(`/registru/${selectedNrInreg}`);
+      const res = await api.get(`/registru/${encodeURIComponent(selectedNrInreg)}`);
       return res.data;
     },
     enabled: !!selectedNrInreg,
@@ -150,7 +148,7 @@ export default function AdaugaRevizie() {
       });
 
       // 4. Setam statusul registrului la "ACTIVE"
-      await api.put(`/registru/${selectedNrInreg}`, { status: 'ACTIVE' });
+      await api.put(`/registru/${encodeURIComponent(selectedNrInreg)}`, { status: 'ACTIVE' });
 
       await queryClient.invalidateQueries({ queryKey: ['documents', user.id] });
       await queryClient.invalidateQueries({

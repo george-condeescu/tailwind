@@ -210,16 +210,17 @@ const findCirculatiiByUserId = async (user_id, options = {}) => {
         to_user_id, 
         circ.note, 
         circ.data_intrare, 
-        circ.data_iesire ,
+        circ.data_iesire
 
       from registers reg 
       inner join documents rev on reg.nr_inreg=rev.nr_inreg 
       inner join document_circulation circ on rev.id=circ.document_id 
       inner join partner par on reg.partener_id=par.id
       inner join users u on circ.from_user_id=u.id
-      where rev.id=:document_id;`,
+      where circ.from_user_id=:user_id OR circ.to_user_id=:user_id
+      order by circ.data_intrare desc;`,
       {
-        replacements: { document_id },
+        replacements: { user_id },
         type: sequelize.QueryTypes.SELECT,
         ...options,
       },

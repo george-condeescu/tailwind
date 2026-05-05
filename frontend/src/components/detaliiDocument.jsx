@@ -63,9 +63,9 @@ export default function DetaliiDocument() {
   };
 
   const userQuery = useQuery({
-    queryKey: ['users'],
+    queryKey: ['recipients'],
     queryFn: async () => {
-      const res = await api.get('/auth/users');
+      const res = await api.get('/auth/recipients');
       return res.data;
     },
   });

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import { Trash, Pencil, BellDot, Eye, RefreshCwOff } from 'lucide-react';
@@ -8,10 +8,8 @@ import { toast } from 'react-hot-toast';
 
 export default function Document({ document }) {
   const [selected, setSelected] = useState(document.selected || false);
-  const [citit, setCitit] = useState(document.citit);
-  useEffect(() => {
-    setCitit(document.citit);
-  }, [document.citit]);
+  const [citit, setCitit] = useState(null);
+  const isUnread = !(citit ?? document.citit);
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
@@ -55,7 +53,7 @@ export default function Document({ document }) {
   };
 
   return (
-    <tr className={`w-full bg-sky-100 ${!citit ? 'font-bold' : ''}`}>
+    <tr className={`w-full bg-sky-100 ${isUnread ? 'font-bold' : ''}`}>
       <td className="p-2">
         <input
           type="checkbox"

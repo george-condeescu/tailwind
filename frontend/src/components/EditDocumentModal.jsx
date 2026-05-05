@@ -189,7 +189,7 @@ export default function EditDocumentModal({ docId, show, handleClose, onSaved })
                     <FileText size={16} className="text-blue-500 shrink-0" />
                     <div className="min-w-0">
                       <a
-                        href={`/pdfuri/${file.file_name}`}
+                        href={`/pdfuri/${encodeURIComponent(file.file_name)}`}
                         download={file.original_name}
                         className="text-sm text-blue-700 hover:underline truncate block"
                       >

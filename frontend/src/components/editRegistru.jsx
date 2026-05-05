@@ -59,8 +59,9 @@ export default function EditRegistruModal({ nrInreg, show, handleClose }) {
 
   useEffect(() => {
     if (!nrInreg) return;
+    const encodedNrInreg = encodeURIComponent(nrInreg);
     api
-      .get(`/registru/${nrInreg}`)
+      .get(`/registru/${encodedNrInreg}`)
       .then((res) => {
         const r = res.data;
         reset({
@@ -78,7 +79,7 @@ export default function EditRegistruModal({ nrInreg, show, handleClose }) {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      await api.put(`/registru/${nrInreg}`, data);
+      await api.put(`/registru/${encodeURIComponent(nrInreg)}`, data);
       toast.success('Registru actualizat cu succes');
       setTimeout(handleClose, 800);
     } catch (err) {

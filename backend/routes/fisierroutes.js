@@ -11,12 +11,13 @@ import {
 } from '../controllers/fisiercontrollers.js';
 
 import { cacheMiddleware } from '../middleware/cacheMiddleware.js';
+import { requireAdmin } from '../middleware/authmiddleware.js';
 
 const upload = multer({ dest: 'uploads/' }); // Configurare multer pentru a salva fișierele în folderul "uploads"
 
 const router = express.Router();
 
-router.get('/', cacheMiddleware(300), getAllFiles);
+router.get('/', requireAdmin, cacheMiddleware(300), getAllFiles);
 router.get('/download/:id', downloadFisier);
 router.get('/:documentId', getFisiereByDocumentId);
 

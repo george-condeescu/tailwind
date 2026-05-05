@@ -1,4 +1,4 @@
-import { Op, literal } from 'sequelize';
+import { Op } from 'sequelize';
 import { Registru, Document, Partner, User, Nrinreg } from '../models/index.js';
 import registruService from '../services/registruService.js';
 import documentService from '../services/documentService.js';
@@ -266,36 +266,60 @@ const searchRegistru = async (req, res) => {
     updatedAt_end,
   } = req.query;
 
-  const currentUserId = parseInt(req.user.userId);
-
+  const currentUserId = Number(req.user.userId);
+  if (!Number.isInteger(currentUserId) || currentUserId <= 0) {
+    return res.status(401).json({ error: 'Invalid authenticated user' });
+  }
   try {
     const registruWhere = {};
     const documentWhere = {};
+    const registruAnd = [];
 
     if (req.query.created_by_me === 'true') {
       // Doar registrele create de utilizatorul curent
       registruWhere.user_id = currentUserId;
     } else {
       // Filtrare automată: documentele create de sau care au trecut pe la utilizatorul curent
-      registruWhere[Op.and] = [
-        literal(`(
-          \`Registru\`.\`user_id\` = ${currentUserId}
-          OR \`Registru\`.\`nr_inreg\` IN (
-            SELECT DISTINCT d.nr_inreg FROM documents d
-            WHERE d.created_by_user_id = ${currentUserId}
-               OR d.current_user_id = ${currentUserId}
-          )
-          OR \`Registru\`.\`nr_inreg\` IN (
-            SELECT DISTINCT d.nr_inreg FROM documents d
-            INNER JOIN document_circulation c ON c.document_id = d.id
-            WHERE c.to_user_id = ${currentUserId}
-               OR c.from_user_id = ${currentUserId}
-          )
-        )`),
-      ];
+      const visibleRows = await sequelize.query(
+        `
+        SELECT DISTINCT nr_inreg
+        FROM (
+          SELECT r.nr_inreg
+          FROM registers r
+          WHERE r.user_id = :currentUserId
+
+          UNION
+
+          SELECT d.nr_inreg
+          FROM documents d
+          WHERE d.created_by_user_id = :currentUserId
+             OR d.current_user_id = :currentUserId
+
+          UNION
+
+          SELECT d.nr_inreg
+          FROM documents d
+          INNER JOIN document_circulation c ON c.document_id = d.id
+          WHERE c.to_user_id = :currentUserId
+             OR c.from_user_id = :currentUserId
+        ) visible_registers
+        `,
+        {
+          replacements: { currentUserId },
+          type: sequelize.QueryTypes.SELECT,
+        },
+      );
+
+      const visibleNrInreg = visibleRows.map((row) => row.nr_inreg);
+      registruAnd.push({
+        nr_inreg:
+          visibleNrInreg.length > 0
+            ? { [Op.in]: visibleNrInreg }
+            : { [Op.eq]: null },
+      });
     }
 
-    if (nr_inreg) registruWhere.nr_inreg = { [Op.like]: `%${nr_inreg}%` };
+    if (nr_inreg) registruAnd.push({ nr_inreg: { [Op.like]: `%${nr_inreg}%` } });
     if (obiectul) registruWhere.obiectul = { [Op.like]: `%${obiectul}%` };
     if (cod_ssi) registruWhere.cod_ssi = { [Op.like]: `%${cod_ssi}%` };
     if (cod_angajament)
@@ -319,6 +343,9 @@ const searchRegistru = async (req, res) => {
     }
 
     if (nr_revizie) documentWhere.nr_revizie = Number(nr_revizie);
+    if (registruAnd.length > 0) {
+      registruWhere[Op.and] = registruAnd;
+    }
 
     const hasDocumentFilter = Object.keys(documentWhere).length > 0;
 

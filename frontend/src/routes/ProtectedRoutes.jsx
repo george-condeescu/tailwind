@@ -2,8 +2,8 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+const ProtectedRoute = ({ children, requireAdmin = false }) => {
+  const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -17,6 +17,10 @@ const ProtectedRoute = ({ children }) => {
   if (!isAuthenticated) {
     // Salvăm locația unde dorea să ajungă pentru a-l redirecta înapoi după login
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (requireAdmin && !user?.is_admin) {
+    return <Navigate to="/login?reason=unauthorized" replace />;
   }
 
   return children;

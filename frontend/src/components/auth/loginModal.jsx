@@ -98,7 +98,10 @@ export default function Login({ isOpen: propIsOpen }) {
 
             // ... după salvarea în localStorage
             dispatch({ type: 'LOGIN_SUCCESS', payload: user });
-            navigate('/dashboard'); // Redirect to the dashboard or any other page
+            const redirectTo =
+              location.state?.from?.pathname ||
+              (user.is_admin ? '/admin/dashboard' : '/');
+            navigate(redirectTo, { replace: true });
             toast.success('Login successful!', {
               duration: 5000,
               icon: '✅',

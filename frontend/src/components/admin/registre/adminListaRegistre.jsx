@@ -46,7 +46,7 @@ export default function AdminListaRegistre() {
   const handleDelete = async (nr_inreg) => {
     if (!window.confirm(`Ștergi registrul "${nr_inreg}"?`)) return;
     try {
-      await api.delete(`/registru/${nr_inreg}`);
+      await api.delete(`/registru/${encodeURIComponent(nr_inreg)}`);
       toast.success('Registru șters cu succes');
       setRegistre((prev) => prev.filter((r) => r.nr_inreg !== nr_inreg));
       const newTotal = registre.length - 1;

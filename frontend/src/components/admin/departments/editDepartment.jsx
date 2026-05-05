@@ -4,9 +4,6 @@ import { toast } from 'react-hot-toast';
 import api from '../../../api/axiosInstance.js';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-//context
-import { useDepartments } from '../../../hooks/useDepartment';
-
 //validare
 import { departamentSchema } from '../../../validations/departament.schema';
 import { zodResolver } from '@hookform/resolvers/zod';

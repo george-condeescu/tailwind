@@ -31,21 +31,6 @@ export default function Fisiere() {
     },
   });
 
-  // users
-  const usersQuery = useQuery({
-    queryKey: ['users'],
-    queryFn: async () => {
-      const response = await api.get('/auth/users');
-      return response.data;
-    },
-  });
-
-  const {
-    data: usersData,
-    isLoading: isUsersLoading,
-    error: usersError,
-  } = usersQuery;
-
   const handleDownload = async (fileId, originalName) => {
     try {
       const response = await api.get(`/fisiere/download/${fileId}`, {
@@ -110,12 +95,12 @@ export default function Fisiere() {
     }
   };
 
-  if (isLoading || isUsersLoading) {
+  if (isLoading) {
     return <div>Loading...</div>;
   }
 
-  if (error || usersError) {
-    return <div>{error?.message || usersError?.message}</div>;
+  if (error) {
+    return <div>{error.message}</div>;
   }
   return (
     <div className="p-4">
@@ -167,9 +152,9 @@ export default function Fisiere() {
               </p>
               <p className="text-sm text-gray-500">
                 Incarcat de{' '}
-                {usersData.users.find(
-                  (user) => user.id === file.uploaded_by_user_id,
-                )?.full_name || 'Unknown'}{' '}
+                {user.id === file.uploaded_by_user_id
+                  ? user.full_name || user.email
+                  : `User #${file.uploaded_by_user_id}`}{' '}
                 la {file.createdAt}
               </p>
             </div>

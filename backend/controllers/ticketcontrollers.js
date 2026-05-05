@@ -2,6 +2,7 @@ import sequelize from '../utils/database.js';
 import ticketService from '../services/ticketService.js';
 import { myCache } from '../middleware/cacheMiddleware.js';
 import logAuditEvent from '../services/auditService.js';
+import User from '../models/user.js';
 
 // Helper: audit în afara unei tranzacții
 const auditWithNewConn = async (req, data) => {
@@ -11,6 +12,19 @@ const auditWithNewConn = async (req, data) => {
   } finally {
     sequelize.connectionManager.releaseConnection(conn);
   }
+};
+
+const isAdminUser = async (req) => {
+  const userId = req.user?.userId;
+  if (!userId) return false;
+  const user = await User.findByPk(userId, { attributes: ['is_admin'] });
+  return !!user?.is_admin;
+};
+
+const canAccessTicket = async (req, ticket) => {
+  if (!ticket) return false;
+  if (ticket.user_id === req.user?.userId) return true;
+  return isAdminUser(req);
 };
 
 const createTicket = async (req, res) => {
@@ -24,7 +38,7 @@ const createTicket = async (req, res) => {
     }));
     const result = await sequelize.transaction(async (t) => {
       const newTicket = await ticketService.createTicket(
-        { ...req.body, fisiere },
+        { ...req.body, user_id: req.user.userId, fisiere },
         t,
       );
       await logAuditEvent(t.connection, {
@@ -145,6 +159,9 @@ const findTicketById = async (req, res) => {
       }).catch((e) => console.error('Audit error:', e));
       return res.status(404).json({ error: 'Ticket not found' });
     }
+    if (!(await canAccessTicket(req, ticket))) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
     await auditWithNewConn(req, {
       action: 'READ',
       entity_type: 'TICKET',
@@ -166,6 +183,9 @@ const findTicketById = async (req, res) => {
 
 const findTicketsByUser = async (req, res) => {
   const { userId } = req.params;
+  if (Number(userId) !== req.user?.userId && !(await isAdminUser(req))) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
   try {
     const tickets = await ticketService.findTicketsByUser(userId);
     await auditWithNewConn(req, {

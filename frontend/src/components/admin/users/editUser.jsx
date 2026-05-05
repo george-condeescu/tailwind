@@ -78,16 +78,12 @@ const EditUser = ({ show, userId, onHide, onSaved }) => {
   useEffect(() => {
     if (!selectedDepartmentId) return;
 
-    let cancelled = false;
-
     const fetchSelectedDepartment = async () => {
       try {
         const response = await api.get(`/departments/${selectedDepartmentId}`);
 
         // dacă backend-ul tău e de forma { message, data }
         const department = response.data.data ?? response.data;
-
-        // if (cancelled) return;
 
         setUser((prevUser) => ({
           ...prevUser,
@@ -100,10 +96,6 @@ const EditUser = ({ show, userId, onHide, onSaved }) => {
     };
 
     fetchSelectedDepartment();
-
-    return () => {
-      cancelled = true;
-    };
   }, [selectedDepartmentId]); // cand se schimbă departamentul selectat, adică când userul alege alt departament din listă
 
   return (
