@@ -7,4 +7,6 @@ backend/.env
 frontend/node_modules/
 frontend/.env
 frontend/dist/
+.agents
+.codex
 CLAUDE.md
